@@ -10,19 +10,22 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'system',
+  theme: 'light',
   setTheme: () => {},
 })
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system')
+  const [theme, setTheme] = useState<Theme>('light')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const stored = localStorage.getItem('theme') as Theme | null
     if (stored) setTheme(stored)
   }, [])
 
   useEffect(() => {
+    if (!mounted) return
     const root = window.document.documentElement
     root.classList.remove('light', 'dark')
 
@@ -37,7 +40,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     localStorage.setItem('theme', theme)
-  }, [theme])
+  }, [theme, mounted])
+
+  if (!mounted) {
+    return <>{children}</>
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

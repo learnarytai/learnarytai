@@ -7,8 +7,9 @@ import type { Profile, ParsedWord } from '@/lib/types'
 import { LanguageSelector } from './language-selector'
 import { TextEditor } from './text-editor'
 import { WordTooltip } from './word-tooltip'
-import { CharacterCounter } from './character-counter'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { ArrowLeftRight } from 'lucide-react'
 
 interface TranslationAreaProps {
   profile: Profile | null
@@ -16,8 +17,8 @@ interface TranslationAreaProps {
 
 export function TranslationArea({ profile }: TranslationAreaProps) {
   const [sourceText, setSourceText] = useState('')
-  const [sourceLang, setSourceLang] = useState('en')
-  const [targetLang, setTargetLang] = useState('ru')
+  const [sourceLang, setSourceLang] = useState('uk')
+  const [targetLang, setTargetLang] = useState('en')
   const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
   const [tooltipData, setTooltipData] = useState<{
     word: ParsedWord
@@ -77,61 +78,92 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
     [addEntry, sourceLang, targetLang]
   )
 
-  return (
-    <div className="flex flex-col gap-4">
-      {/* Language selectors */}
-      <div className="flex items-center justify-center">
-        <LanguageSelector
-          sourceLang={sourceLang}
-          targetLang={targetLang}
-          onSourceChange={setSourceLang}
-          onTargetChange={setTargetLang}
-          onSwap={handleSwapLanguages}
-        />
-      </div>
+  const charUsed = profile?.characters_used ?? 0
+  const charLimit = profile?.characters_limit ?? 1000
+  const tier = profile?.subscription_tier ?? 'free'
+  const charPercent = tier === 'pro' ? 0 : (charUsed / charLimit) * 100
 
+  return (
+    <div className="flex h-[calc(100vh-5rem)] flex-col">
       {error && (
-        <div className="rounded-md bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
+        <div className="mx-auto mb-3 max-w-md rounded-xl bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
           {error}
         </div>
       )}
 
-      {/* Two A4 sheets side by side */}
-      <div className="flex gap-6 overflow-x-auto pb-4">
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Source
+      {/* Two A4 sheets */}
+      <div className="flex min-h-0 flex-1 gap-6 overflow-hidden px-2">
+        {/* Source sheet */}
+        <div className="flex flex-1 flex-col">
+          <div className="mb-3 flex justify-center">
+            <LanguageSelector
+              value={sourceLang}
+              onChange={setSourceLang}
+            />
           </div>
-          <TextEditor
-            mode="input"
-            text={sourceText}
-            hoveredWordId={hoveredWordId}
-            placeholder="Type or paste text here..."
-            onChange={setSourceText}
-            onWordHover={handleWordHover}
-          />
-          <div className="flex justify-end">
-            <CharacterCounter
-              current={sourceText.length}
-              limit={profile?.characters_limit ?? 1000}
-              tier={profile?.subscription_tier ?? 'free'}
+          <div className="a4-sheet flex-1 overflow-y-auto">
+            <TextEditor
+              mode="input"
+              text={sourceText}
+              hoveredWordId={hoveredWordId}
+              placeholder="Type or paste text here..."
+              onChange={setSourceText}
+              onWordHover={handleWordHover}
             />
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Translation
+        {/* Swap button */}
+        <div className="flex items-center">
+          <button
+            onClick={handleSwapLanguages}
+            className="rounded-full border bg-background p-2 shadow-sm transition-colors hover:bg-muted"
+          >
+            <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Target sheet */}
+        <div className="flex flex-1 flex-col">
+          <div className="mb-3 flex justify-center">
+            <LanguageSelector
+              value={targetLang}
+              onChange={setTargetLang}
+            />
           </div>
-          <TextEditor
-            mode="output"
-            text={translatedText}
-            parsedWords={parsedWords}
-            hoveredWordId={hoveredWordId}
-            isLoading={isLoading}
-            onWordHover={handleWordHover}
+          <div className="a4-sheet flex-1 overflow-y-auto">
+            <TextEditor
+              mode="output"
+              text={translatedText}
+              parsedWords={parsedWords}
+              hoveredWordId={hoveredWordId}
+              isLoading={isLoading}
+              onWordHover={handleWordHover}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Fixed character counter at bottom */}
+      <div className="sticky bottom-0 mt-3 flex items-center justify-center gap-3 rounded-xl border bg-background/80 px-4 py-2 backdrop-blur-sm">
+        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-secondary">
+          <div
+            className={cn(
+              'h-full rounded-full transition-all',
+              charPercent > 90
+                ? 'bg-destructive'
+                : charPercent > 70
+                  ? 'bg-yellow-500'
+                  : 'bg-primary'
+            )}
+            style={{ width: tier === 'pro' ? '0%' : `${Math.min(charPercent, 100)}%` }}
           />
         </div>
+        <span className="text-xs text-muted-foreground">
+          {tier === 'pro'
+            ? `${charUsed.toLocaleString()} characters (Pro)`
+            : `${charUsed.toLocaleString()} / ${charLimit.toLocaleString()}`}
+        </span>
       </div>
 
       {/* Tooltip */}

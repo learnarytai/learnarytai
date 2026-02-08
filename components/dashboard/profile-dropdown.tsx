@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Settings, Globe, Sun, Moon, Monitor, LogOut } from 'lucide-react'
+import { Settings, Globe, Sun, Moon, Monitor, LogOut, User } from 'lucide-react'
 
 interface ProfileDropdownProps {
   profile: Profile | null
@@ -38,7 +38,7 @@ export function ProfileDropdown({
         .map((n) => n[0])
         .join('')
         .toUpperCase()
-    : profile?.email?.[0]?.toUpperCase() || '?'
+    : null
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -65,11 +65,13 @@ export function ProfileDropdown({
         <button className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Avatar className="h-8 w-8">
             <AvatarImage src={profile?.avatar_url || undefined} />
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-muted">
+              {initials || <User className="h-4 w-4 text-muted-foreground" />}
+            </AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 rounded-xl">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
@@ -77,20 +79,21 @@ export function ProfileDropdown({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push('/settings')}>
+        <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg">
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
+          <DropdownMenuSubTrigger className="rounded-lg">
             <Globe className="mr-2 h-4 w-4" />
             Language
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
+          <DropdownMenuSubContent className="rounded-xl">
             {UI_LANGUAGES.map((lang) => (
               <DropdownMenuItem
                 key={lang.code}
                 onClick={() => handleLanguageChange(lang.code)}
+                className="rounded-lg"
               >
                 {lang.name}
                 {profile?.interface_language === lang.code && (
@@ -101,7 +104,7 @@ export function ProfileDropdown({
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
+          <DropdownMenuSubTrigger className="rounded-lg">
             {theme === 'dark' ? (
               <Moon className="mr-2 h-4 w-4" />
             ) : (
@@ -109,18 +112,18 @@ export function ProfileDropdown({
             )}
             Theme
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => setTheme('light')}>
+          <DropdownMenuSubContent className="rounded-xl">
+            <DropdownMenuItem onClick={() => setTheme('light')} className="rounded-lg">
               <Sun className="mr-2 h-4 w-4" />
               Light
               {theme === 'light' && <span className="ml-auto text-xs text-primary">&#10003;</span>}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('dark')}>
+            <DropdownMenuItem onClick={() => setTheme('dark')} className="rounded-lg">
               <Moon className="mr-2 h-4 w-4" />
               Dark
               {theme === 'dark' && <span className="ml-auto text-xs text-primary">&#10003;</span>}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('system')}>
+            <DropdownMenuItem onClick={() => setTheme('system')} className="rounded-lg">
               <Monitor className="mr-2 h-4 w-4" />
               System
               {theme === 'system' && <span className="ml-auto text-xs text-primary">&#10003;</span>}
@@ -128,7 +131,7 @@ export function ProfileDropdown({
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+        <DropdownMenuItem onClick={handleLogout} className="rounded-lg text-destructive">
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </DropdownMenuItem>

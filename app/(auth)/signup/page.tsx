@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Languages } from 'lucide-react'
+
 import { toast } from 'sonner'
 
 export default function SignupPage() {
@@ -52,9 +52,8 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="mb-2 flex items-center justify-center gap-2">
-            <Languages className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">StudyLab</span>
+          <Link href="/" className="mb-2 block text-center text-xl font-bold tracking-tight">
+            Learnary Tai
           </Link>
           <CardTitle>Create Account</CardTitle>
         </CardHeader>

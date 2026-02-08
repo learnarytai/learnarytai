@@ -4,7 +4,7 @@ import { Toaster } from 'sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'StudyLab',
+  title: 'Learnary Tai',
   description: 'Learn languages with real-time translation and interactive hints',
 }
 

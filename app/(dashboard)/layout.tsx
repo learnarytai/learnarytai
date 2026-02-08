@@ -18,22 +18,48 @@ export default function DashboardLayout({
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        if (data) setProfile(data as Profile)
+      if (!user) return
+
+      // Try to get profile
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (data) {
+        // If no avatar in profile, try to get from auth metadata (Google)
+        if (!data.avatar_url && user.user_metadata?.avatar_url) {
+          data.avatar_url = user.user_metadata.avatar_url
+        }
+        if (!data.full_name && user.user_metadata?.full_name) {
+          data.full_name = user.user_metadata.full_name
+        }
+        setProfile(data as Profile)
+      } else {
+        // Profile doesn't exist yet, create a minimal one for display
+        setProfile({
+          id: user.id,
+          email: user.email || null,
+          full_name: user.user_metadata?.full_name || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+          subscription_tier: 'free',
+          characters_used: 0,
+          characters_limit: 1000,
+          interface_language: 'uk',
+          theme: 'light',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
       }
     }
     loadProfile()
   }, [supabase])
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen overflow-hidden">
       <Header profile={profile} />
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-4">{children}</main>
     </div>
   )
 }

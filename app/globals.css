@@ -71,23 +71,20 @@
 /* A4 Sheet Styling */
 .a4-sheet {
   width: 100%;
-  max-width: 21cm;
-  min-height: 29.7cm;
-  padding: 2cm;
+  padding: 1.5rem;
   background: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  font-family: 'Times New Roman', serif;
-  font-size: 12pt;
-  line-height: 1.6;
-  overflow-y: auto;
+  border: 1.5px solid hsl(0 0% 86%);
+  border-radius: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
   color: #1a1a1a;
 }
 
 .dark .a4-sheet {
-  background: #1a1a1a;
+  background: hsl(0 0% 6%);
   color: #e5e5e5;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+  border-color: hsl(0 0% 18%);
 }
 
 /* Part of speech highlighting */

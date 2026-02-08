@@ -33,7 +33,7 @@ export async function PATCH(request: NextRequest) {
     .update(updates)
     .eq('id', user.id)
     .select()
-    .single()
+    .maybeSingle()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
