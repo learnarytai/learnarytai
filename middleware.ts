@@ -5,15 +5,17 @@ import { type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const response = await updateSession(request)
 
-  // Set geo-detected language cookie if not already set
-  if (!request.cookies.get('geo-lang')) {
-    const country = request.headers.get('x-vercel-ip-country') || undefined
+  // Always detect country and set geo cookie
+  const country = request.headers.get('x-vercel-ip-country') || undefined
+  if (country) {
     const lang = getLanguageByCountry(country)
     response.cookies.set('geo-lang', lang, {
       maxAge: 60 * 60 * 24 * 365,
       path: '/',
       sameSite: 'lax',
     })
+    response.headers.set('x-geo-country', country)
+    response.headers.set('x-geo-lang', lang)
   }
 
   return response
