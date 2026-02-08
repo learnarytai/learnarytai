@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from '@/hooks/use-translation'
 import { useDictionary } from '@/hooks/use-dictionary'
+import { getGeoLanguage } from '@/hooks/use-geo-language'
 import type { Profile, ParsedWord } from '@/lib/types'
 import { LanguageSelector } from './language-selector'
 import { TextEditor } from './text-editor'
@@ -16,9 +17,10 @@ interface TranslationAreaProps {
 }
 
 export function TranslationArea({ profile }: TranslationAreaProps) {
+  const geoLang = useMemo(() => getGeoLanguage(), [])
   const [sourceText, setSourceText] = useState('')
-  const [sourceLang, setSourceLang] = useState('uk')
-  const [targetLang, setTargetLang] = useState('en')
+  const [sourceLang, setSourceLang] = useState(geoLang)
+  const [targetLang, setTargetLang] = useState(geoLang === 'en' ? 'uk' : 'en')
   const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
   const [tooltipData, setTooltipData] = useState<{
     word: ParsedWord
