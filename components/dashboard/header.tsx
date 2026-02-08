@@ -30,7 +30,7 @@ export function Header({ profile }: HeaderProps) {
         <div className="flex items-center gap-6">
           <Link href="/translator" className="flex items-center gap-2 font-semibold">
             <Languages className="h-5 w-5 text-primary" />
-            <span>LinguaLearn</span>
+            <span>StudyLab</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => (

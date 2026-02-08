@@ -10,7 +10,7 @@ export default function LandingPage() {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-2 font-semibold">
             <Languages className="h-5 w-5 text-primary" />
-            LinguaLearn
+            StudyLab
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild>
@@ -77,7 +77,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t px-4 py-6 text-center text-sm text-muted-foreground">
-        &copy; {new Date().getFullYear()} LinguaLearn. All rights reserved.
+        &copy; {new Date().getFullYear()} StudyLab. All rights reserved.
       </footer>
     </div>
   )

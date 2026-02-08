@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(node_modules.bintsc:*)",
+      "Bash(npx --no-install tsc:*)",
+      "Bash(node node_modules/typescript/bin/tsc:*)",
+      "Bash(cmd /c \"rmdir /s /q node_modules\")",
+      "Bash(powershell:*)",
+      "Bash(tasklist:*)",
+      "Bash(echo:*)",
+      "Bash(npx next build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: LinguaLearn language learning platform\n\n- Next.js 15 + TypeScript + Tailwind CSS + Shadcn UI\n- Real-time translation with OpenRouter AI\n- Part-of-speech highlighting \\(12 types\\)\n- Personal dictionary with add/delete\n- Auth: Email + Google/GitHub/Apple via Supabase\n- LemonSqueezy subscription \\(Free/Pro\\)\n- Dashboard with header, profile dropdown, theme switcher\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

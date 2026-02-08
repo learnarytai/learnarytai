@@ -47,7 +47,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <Link href="/" className="mb-2 flex items-center justify-center gap-2">
             <Languages className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">LinguaLearn</span>
+            <span className="text-xl font-bold">StudyLab</span>
           </Link>
           <CardTitle>Sign In</CardTitle>
         </CardHeader>
