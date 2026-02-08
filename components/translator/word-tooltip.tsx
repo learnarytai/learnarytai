@@ -1,7 +1,8 @@
 'use client'
 
+import { useRef, useEffect } from 'react'
 import { PART_OF_SPEECH_COLORS } from '@/lib/constants'
-import type { ParsedWord } from '@/lib/types'
+import type { ParsedWord, PartOfSpeech } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
@@ -13,34 +14,57 @@ interface WordTooltipProps {
 }
 
 export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipProps) {
-  const color = PART_OF_SPEECH_COLORS[word.pos] || '#e5e5e5'
+  const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech] || '#e5e5e5'
+  const tooltipRef = useRef<HTMLDivElement>(null)
+
+  // Adjust position to stay within viewport
+  useEffect(() => {
+    if (!tooltipRef.current) return
+    const rect = tooltipRef.current.getBoundingClientRect()
+    const el = tooltipRef.current
+
+    if (rect.right > window.innerWidth - 16) {
+      el.style.left = `${window.innerWidth - rect.width - 16}px`
+    }
+    if (rect.bottom > window.innerHeight - 16) {
+      el.style.top = `${position.y - rect.height - 12}px`
+    }
+  }, [position])
 
   return (
     <div
-      className="fixed z-[100] w-72 rounded-lg border bg-popover p-3 shadow-lg"
+      ref={tooltipRef}
+      className="fixed z-[100] w-80 rounded-xl border bg-popover p-4 shadow-xl"
       style={{
         left: `${position.x}px`,
         top: `${position.y + 8}px`,
       }}
     >
-      <div className="mb-2 flex items-start justify-between">
-        <div>
-          <p className="font-medium">{word.original}</p>
+      {/* Header: word pair + POS badge */}
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-semibold">{word.original}</p>
           <p className="text-sm text-muted-foreground">{word.translation}</p>
         </div>
         <Badge
           variant="secondary"
           style={{ backgroundColor: color, color: '#333' }}
-          className="text-xs"
+          className="shrink-0 text-xs font-medium"
         >
           {word.pos}
         </Badge>
       </div>
+
+      {/* Grammar explanation */}
       {word.explanation && (
-        <p className="mb-2 text-xs leading-relaxed text-muted-foreground">
-          {word.explanation}
-        </p>
+        <div className="mb-3 rounded-lg bg-muted/50 p-2.5">
+          <p className="text-xs leading-relaxed text-foreground/80">
+            {word.explanation}
+          </p>
+        </div>
       )}
+
+      {/* Add to dictionary button */}
       <Button
         variant="outline"
         size="sm"

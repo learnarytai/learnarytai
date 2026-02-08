@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { ensureProfile } from '@/lib/supabase/ensure-profile'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function PATCH(request: NextRequest) {
@@ -10,6 +11,9 @@ export async function PATCH(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Ensure profile exists before updating
+  await ensureProfile(supabase, user)
 
   const body = await request.json()
 

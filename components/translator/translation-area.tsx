@@ -10,7 +10,7 @@ import { TextEditor } from './text-editor'
 import { WordTooltip } from './word-tooltip'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { ArrowLeftRight } from 'lucide-react'
+import { ArrowLeftRight, Pencil } from 'lucide-react'
 
 interface TranslationAreaProps {
   profile: Profile | null
@@ -22,6 +22,7 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
   const [sourceLang, setSourceLang] = useState(geoLang)
   const [targetLang, setTargetLang] = useState(geoLang === 'en' ? 'uk' : 'en')
   const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(true)
   const [tooltipData, setTooltipData] = useState<{
     word: ParsedWord
     position: { x: number; y: number }
@@ -34,11 +35,25 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
   )
   const { addEntry } = useDictionary()
 
+  // When translation completes, switch source to highlighted mode
+  const hasTranslation = parsedWords.length > 0 && !isLoading
+  const sourceMode = hasTranslation && !isEditing ? 'source' : 'input'
+
   const handleSwapLanguages = useCallback(() => {
     setSourceLang(targetLang)
     setTargetLang(sourceLang)
     setSourceText(translatedText)
+    setIsEditing(true)
   }, [sourceLang, targetLang, translatedText])
+
+  const handleSourceTextChange = useCallback((text: string) => {
+    setSourceText(text)
+    setIsEditing(true)
+  }, [])
+
+  const handleEditRequest = useCallback(() => {
+    setIsEditing(true)
+  }, [])
 
   const handleWordHover = useCallback(
     (wordId: string | null, event?: React.MouseEvent) => {
@@ -97,20 +112,28 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
       <div className="flex min-h-0 flex-1 gap-6 overflow-hidden px-2">
         {/* Source sheet */}
         <div className="flex flex-1 flex-col">
-          <div className="mb-3 flex justify-center">
-            <LanguageSelector
-              value={sourceLang}
-              onChange={setSourceLang}
-            />
+          <div className="mb-3 flex items-center justify-center gap-2">
+            <LanguageSelector value={sourceLang} onChange={setSourceLang} />
+            {sourceMode === 'source' && (
+              <button
+                onClick={handleEditRequest}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="Edit text"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
           <div className="a4-sheet flex-1 overflow-y-auto">
             <TextEditor
-              mode="input"
+              mode={sourceMode}
               text={sourceText}
+              parsedWords={parsedWords}
               hoveredWordId={hoveredWordId}
               placeholder="Type or paste text here..."
-              onChange={setSourceText}
+              onChange={handleSourceTextChange}
               onWordHover={handleWordHover}
+              onEditRequest={handleEditRequest}
             />
           </div>
         </div>
@@ -128,10 +151,7 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
         {/* Target sheet */}
         <div className="flex flex-1 flex-col">
           <div className="mb-3 flex justify-center">
-            <LanguageSelector
-              value={targetLang}
-              onChange={setTargetLang}
-            />
+            <LanguageSelector value={targetLang} onChange={setTargetLang} />
           </div>
           <div className="a4-sheet flex-1 overflow-y-auto">
             <TextEditor

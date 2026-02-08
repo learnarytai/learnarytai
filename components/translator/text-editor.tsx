@@ -2,10 +2,10 @@
 
 import { useRef, useCallback } from 'react'
 import { PART_OF_SPEECH_COLORS } from '@/lib/constants'
-import type { ParsedWord } from '@/lib/types'
+import type { ParsedWord, PartOfSpeech } from '@/lib/types'
 
 interface TextEditorProps {
-  mode: 'input' | 'output'
+  mode: 'input' | 'source' | 'output'
   text: string
   parsedWords?: ParsedWord[]
   hoveredWordId: string | null
@@ -13,6 +13,7 @@ interface TextEditorProps {
   placeholder?: string
   onChange?: (text: string) => void
   onWordHover: (wordId: string | null, event?: React.MouseEvent) => void
+  onEditRequest?: () => void
 }
 
 export function TextEditor({
@@ -24,6 +25,7 @@ export function TextEditor({
   placeholder,
   onChange,
   onWordHover,
+  onEditRequest,
 }: TextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -37,6 +39,7 @@ export function TextEditor({
     onWordHover(null)
   }, [onWordHover])
 
+  // Editable input mode
   if (mode === 'input') {
     return (
       <div className="relative h-full">
@@ -57,6 +60,49 @@ export function TextEditor({
     )
   }
 
+  // Source mode — highlighted original words (click to edit)
+  if (mode === 'source') {
+    return (
+      <div
+        className="h-full cursor-text"
+        onMouseLeave={handleMouseLeave}
+        onClick={onEditRequest}
+      >
+        <div className="min-h-[200px]" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          {parsedWords.length > 0 ? (
+            parsedWords.map((word) => {
+              const isHovered = hoveredWordId === word.id
+              const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech]
+
+              return (
+                <span
+                  key={`src-${word.id}`}
+                  data-word-id={word.id}
+                  className="cursor-pointer rounded-sm px-[1px] transition-all duration-150"
+                  style={{
+                    backgroundColor: isHovered
+                      ? color || '#FFFF00'
+                      : color
+                        ? `${color}30`
+                        : undefined,
+                    boxShadow: isHovered ? `0 2px 0 ${color || '#FFFF00'}` : undefined,
+                  }}
+                  onMouseEnter={(e) => onWordHover(word.id, e)}
+                  onMouseLeave={() => onWordHover(null)}
+                >
+                  {word.original}
+                </span>
+              )
+            })
+          ) : (
+            <span>{text}</span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Output mode — highlighted translation words
   const renderHighlightedText = () => {
     if (isLoading) {
       return (
@@ -79,16 +125,21 @@ export function TextEditor({
 
     return parsedWords.map((word) => {
       const isHovered = hoveredWordId === word.id
-      const color = PART_OF_SPEECH_COLORS[word.pos]
+      const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech]
 
       return (
         <span
-          key={word.id}
+          key={`tgt-${word.id}`}
           data-word-id={word.id}
           data-pos={word.pos}
-          className="cursor-pointer rounded-sm px-[1px] transition-colors"
+          className="cursor-pointer rounded-sm px-[1px] transition-all duration-150"
           style={{
-            backgroundColor: isHovered ? '#FFFF00' : color ? `${color}40` : undefined,
+            backgroundColor: isHovered
+              ? color || '#FFFF00'
+              : color
+                ? `${color}40`
+                : undefined,
+            boxShadow: isHovered ? `0 2px 0 ${color || '#FFFF00'}` : undefined,
           }}
           onMouseEnter={(e) => onWordHover(word.id, e)}
           onMouseLeave={() => onWordHover(null)}

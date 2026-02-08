@@ -14,7 +14,7 @@ export function useTranslation(
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const debouncedText = useDebounce(text, 500)
+  const debouncedText = useDebounce(text, 300)
 
   useEffect(() => {
     if (!debouncedText.trim()) {

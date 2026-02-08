@@ -28,7 +28,6 @@ export default function DashboardLayout({
         .maybeSingle()
 
       if (data) {
-        // If no avatar in profile, try to get from auth metadata (Google)
         if (!data.avatar_url && user.user_metadata?.avatar_url) {
           data.avatar_url = user.user_metadata.avatar_url
         }
@@ -37,8 +36,8 @@ export default function DashboardLayout({
         }
         setProfile(data as Profile)
       } else {
-        // Profile doesn't exist yet, create a minimal one for display
-        setProfile({
+        // Profile doesn't exist — create it
+        const newProfile = {
           id: user.id,
           email: user.email || null,
           full_name: user.user_metadata?.full_name || null,
@@ -46,11 +45,19 @@ export default function DashboardLayout({
           subscription_tier: 'free',
           characters_used: 0,
           characters_limit: 1000,
-          interface_language: 'uk',
+          interface_language: 'en',
           theme: 'light',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        })
+        }
+
+        const { data: created } = await supabase
+          .from('profiles')
+          .upsert(newProfile, { onConflict: 'id' })
+          .select()
+          .maybeSingle()
+
+        setProfile((created as Profile) || (newProfile as Profile))
       }
     }
     loadProfile()

@@ -18,7 +18,6 @@ export interface ParsedWord {
   translation: string
   pos: PartOfSpeech
   explanation: string
-  position: { start: number; end: number }
 }
 
 export interface TranslationResult {

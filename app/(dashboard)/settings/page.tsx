@@ -15,13 +15,39 @@ export default function SettingsPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase
+      if (!user) return
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (data) {
+        setProfile(data as Profile)
+      } else {
+        // Profile doesn't exist — create it
+        const newProfile = {
+          id: user.id,
+          email: user.email || null,
+          full_name: user.user_metadata?.full_name || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+          subscription_tier: 'free',
+          characters_used: 0,
+          characters_limit: 1000,
+          interface_language: 'en',
+          theme: 'light',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        const { data: created } = await supabase
           .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        if (data) setProfile(data as Profile)
+          .upsert(newProfile, { onConflict: 'id' })
+          .select()
+          .maybeSingle()
+
+        setProfile((created as Profile) || (newProfile as Profile))
       }
     }
     loadProfile()
