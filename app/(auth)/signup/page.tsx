@@ -22,17 +22,21 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    })
-    if (error) {
-      toast.error(error.message)
-    } else {
-      toast.success('Check your email to confirm your account')
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        },
+      })
+      if (error) {
+        toast.error(error.message)
+      } else {
+        toast.success('Check your email to confirm your account')
+      }
+    } catch {
+      toast.error('Sign up failed. Please try again.')
     }
     setLoading(false)
   }
