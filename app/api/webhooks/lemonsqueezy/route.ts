@@ -2,20 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
   const signature = request.headers.get('x-signature')
 
   if (!signature || !process.env.LEMONSQUEEZY_WEBHOOK_SECRET) {
-    return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+    return NextResponse.json({ error: 'Webhooks not configured' }, { status: 503 })
   }
 
-  // Verify webhook signature
   const hmac = crypto.createHmac(
     'sha256',
     process.env.LEMONSQUEEZY_WEBHOOK_SECRET
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
+  const supabaseAdmin = getSupabaseAdmin()
   const payload = JSON.parse(rawBody)
   const eventName = payload.meta?.event_name
   const customData = payload.meta?.custom_data

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -13,7 +12,6 @@ import { Languages } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function SignupPage() {
-  const router = useRouter()
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -41,9 +39,9 @@ export default function SignupPage() {
     setLoading(false)
   }
 
-  const handleOAuth = async (provider: 'google' | 'github' | 'apple') => {
+  const handleGoogle = async () => {
     await supabase.auth.signInWithOAuth({
-      provider,
+      provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback`,
       },
@@ -61,17 +59,9 @@ export default function SignupPage() {
           <CardTitle>Create Account</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <Button variant="outline" onClick={() => handleOAuth('google')}>
-              Continue with Google
-            </Button>
-            <Button variant="outline" onClick={() => handleOAuth('github')}>
-              Continue with GitHub
-            </Button>
-            <Button variant="outline" onClick={() => handleOAuth('apple')}>
-              Continue with Apple
-            </Button>
-          </div>
+          <Button variant="outline" className="w-full" onClick={handleGoogle}>
+            Continue with Google
+          </Button>
 
           <div className="flex items-center gap-2">
             <Separator className="flex-1" />
