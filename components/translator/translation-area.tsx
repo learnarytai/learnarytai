@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from '@/hooks/use-translation'
 import { useDictionary } from '@/hooks/use-dictionary'
-import { getGeoLanguage } from '@/hooks/use-geo-language'
+import { useGeoLanguage } from '@/hooks/use-geo-language'
 import type { Profile, ParsedWord } from '@/lib/types'
 import { LanguageSelector } from './language-selector'
 import { TextEditor } from './text-editor'
@@ -17,10 +17,20 @@ interface TranslationAreaProps {
 }
 
 export function TranslationArea({ profile }: TranslationAreaProps) {
-  const geoLang = useMemo(() => getGeoLanguage(), [])
+  const geoLang = useGeoLanguage()
   const [sourceText, setSourceText] = useState('')
-  const [sourceLang, setSourceLang] = useState(geoLang)
-  const [targetLang, setTargetLang] = useState(geoLang === 'en' ? 'uk' : 'en')
+  const [sourceLang, setSourceLang] = useState('en')
+  const [targetLang, setTargetLang] = useState('uk')
+  const [langInitialized, setLangInitialized] = useState(false)
+
+  // Set languages from geo detection after mount (avoids hydration mismatch)
+  useEffect(() => {
+    if (!langInitialized && geoLang !== 'en') {
+      setSourceLang(geoLang)
+      setTargetLang('en')
+      setLangInitialized(true)
+    }
+  }, [geoLang, langInitialized])
   const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(true)
   const [tooltipData, setTooltipData] = useState<{

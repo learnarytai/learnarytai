@@ -1,15 +1,17 @@
-import { SupabaseClient } from '@supabase/supabase-js'
+import { getAdminClient } from './admin'
 import type { Profile } from '@/lib/types'
 
 /**
  * Ensures a profile exists for the given user.
- * If no profile row exists, creates one with defaults.
+ * Uses admin client (service_role key) to bypass RLS.
+ * ONLY use in server-side code (API routes).
  */
 export async function ensureProfile(
-  supabase: SupabaseClient,
   user: { id: string; email?: string; user_metadata?: Record<string, string> }
 ): Promise<Profile> {
-  const { data } = await supabase
+  const admin = getAdminClient()
+
+  const { data } = await admin
     .from('profiles')
     .select('*')
     .eq('id', user.id)
@@ -17,7 +19,7 @@ export async function ensureProfile(
 
   if (data) return data as Profile
 
-  // Profile doesn't exist — create it
+  // Profile doesn't exist — create it with admin privileges
   const newProfile = {
     id: user.id,
     email: user.email || null,
@@ -28,21 +30,22 @@ export async function ensureProfile(
     characters_limit: 1000,
     interface_language: 'en',
     theme: 'light',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   }
 
-  const { data: created, error } = await supabase
+  const { data: created, error } = await admin
     .from('profiles')
     .upsert(newProfile, { onConflict: 'id' })
     .select()
-    .maybeSingle()
+    .single()
 
   if (error) {
     console.error('Failed to create profile:', error)
-    // Return a fallback in-memory profile so the app doesn't crash
-    return newProfile as Profile
+    return {
+      ...newProfile,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as Profile
   }
 
-  return (created as Profile) || (newProfile as Profile)
+  return created as Profile
 }

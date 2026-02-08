@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { ensureProfile } from '@/lib/supabase/ensure-profile'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function PATCH(request: NextRequest) {
@@ -12,8 +13,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Ensure profile exists before updating
-  await ensureProfile(supabase, user)
+  // Ensure profile exists (uses admin client)
+  await ensureProfile(user)
 
   const body = await request.json()
 
@@ -32,12 +33,13 @@ export async function PATCH(request: NextRequest) {
 
   updates.updated_at = new Date().toISOString()
 
-  const { data, error } = await supabase
+  // Use admin client to bypass RLS
+  const { data, error } = await getAdminClient()
     .from('profiles')
     .update(updates)
     .eq('id', user.id)
     .select()
-    .maybeSingle()
+    .single()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

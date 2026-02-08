@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { ensureProfile } from '@/lib/supabase/ensure-profile'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { openrouter } from '@/lib/openrouter'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const profile = await ensureProfile(supabase, user)
+  const profile = await ensureProfile(user)
 
   const charCount = text.length
   if (
@@ -129,8 +130,8 @@ ${text}`
       }))
     }
 
-    // Update character count
-    await supabase
+    // Update character count (use admin to bypass RLS)
+    await getAdminClient()
       .from('profiles')
       .update({
         characters_used: profile.characters_used + charCount,

@@ -17,37 +17,16 @@ export default function SettingsPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (data) {
-        setProfile(data as Profile)
-      } else {
-        // Profile doesn't exist — create it
-        const newProfile = {
-          id: user.id,
-          email: user.email || null,
-          full_name: user.user_metadata?.full_name || null,
-          avatar_url: user.user_metadata?.avatar_url || null,
-          subscription_tier: 'free',
-          characters_used: 0,
-          characters_limit: 1000,
-          interface_language: 'en',
-          theme: 'light',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+      // Use server API to ensure profile exists (bypasses RLS)
+      try {
+        const res = await fetch('/api/ensure-profile', { method: 'POST' })
+        if (res.ok) {
+          const data = await res.json()
+          setProfile(data as Profile)
+          return
         }
-
-        const { data: created } = await supabase
-          .from('profiles')
-          .upsert(newProfile, { onConflict: 'id' })
-          .select()
-          .maybeSingle()
-
-        setProfile((created as Profile) || (newProfile as Profile))
+      } catch {
+        // fallback: spinner stays
       }
     }
     loadProfile()

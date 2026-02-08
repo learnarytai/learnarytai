@@ -20,45 +20,39 @@ export default function DashboardLayout({
       } = await supabase.auth.getUser()
       if (!user) return
 
-      // Try to get profile
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (data) {
-        if (!data.avatar_url && user.user_metadata?.avatar_url) {
-          data.avatar_url = user.user_metadata.avatar_url
+      // Use server API to ensure profile exists (bypasses RLS)
+      try {
+        const res = await fetch('/api/ensure-profile', { method: 'POST' })
+        if (res.ok) {
+          const data = await res.json()
+          // Enrich with Google metadata if available
+          if (!data.avatar_url && user.user_metadata?.avatar_url) {
+            data.avatar_url = user.user_metadata.avatar_url
+          }
+          if (!data.full_name && user.user_metadata?.full_name) {
+            data.full_name = user.user_metadata.full_name
+          }
+          setProfile(data as Profile)
+          return
         }
-        if (!data.full_name && user.user_metadata?.full_name) {
-          data.full_name = user.user_metadata.full_name
-        }
-        setProfile(data as Profile)
-      } else {
-        // Profile doesn't exist — create it
-        const newProfile = {
-          id: user.id,
-          email: user.email || null,
-          full_name: user.user_metadata?.full_name || null,
-          avatar_url: user.user_metadata?.avatar_url || null,
-          subscription_tier: 'free',
-          characters_used: 0,
-          characters_limit: 1000,
-          interface_language: 'en',
-          theme: 'light',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-
-        const { data: created } = await supabase
-          .from('profiles')
-          .upsert(newProfile, { onConflict: 'id' })
-          .select()
-          .maybeSingle()
-
-        setProfile((created as Profile) || (newProfile as Profile))
+      } catch {
+        // fallback below
       }
+
+      // Fallback: minimal in-memory profile
+      setProfile({
+        id: user.id,
+        email: user.email || null,
+        full_name: user.user_metadata?.full_name || null,
+        avatar_url: user.user_metadata?.avatar_url || null,
+        subscription_tier: 'free',
+        characters_used: 0,
+        characters_limit: 1000,
+        interface_language: 'en',
+        theme: 'light',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
     }
     loadProfile()
   }, [supabase])
