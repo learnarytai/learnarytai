@@ -15,13 +15,11 @@ const UI_LANG_NAMES: Record<string, string> = {
   it: 'Italian', es: 'Spanish', fr: 'French',
 }
 
-// Models to try in order (non-thinking models work best for JSON)
+// Models to try in order — VERIFIED working IDs from OpenRouter
 const MODELS = [
-  process.env.OPENROUTER_MODEL,
-  'google/gemini-2.0-flash-exp:free',
+  'z-ai/glm-4.5-air:free',
   'meta-llama/llama-3.3-70b-instruct:free',
-  'mistralai/mistral-small-3.1-24b-instruct:free',
-  'google/gemma-3-27b:free',
+  'arcee-ai/trinity-large-preview:free',
 ].filter(Boolean) as string[]
 
 function extractJSON(raw: string): string {
