@@ -58,6 +58,11 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.participle': 'participle',
     'pos.gerund': 'gerund',
 
+    // Tooltip
+    'tooltip.pos': 'part of speech',
+    'tooltip.definition': 'definition',
+    'tooltip.example': 'example',
+
     // Dictionary
     'dictionary.title': 'Dictionary',
     'dictionary.empty': 'Your dictionary is empty',
@@ -145,6 +150,11 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.interjection': 'вигук',
     'pos.participle': 'дієприкметник',
     'pos.gerund': 'дієприслівник',
+
+    // Tooltip
+    'tooltip.pos': 'частина мови',
+    'tooltip.definition': 'визначення',
+    'tooltip.example': 'приклад',
 
     // Dictionary
     'dictionary.title': 'Словник',
@@ -234,6 +244,11 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.participle': 'причастие',
     'pos.gerund': 'деепричастие',
 
+    // Tooltip
+    'tooltip.pos': 'часть речи',
+    'tooltip.definition': 'определение',
+    'tooltip.example': 'пример',
+
     // Dictionary
     'dictionary.title': 'Словарь',
     'dictionary.empty': 'Ваш словарь пуст',
@@ -321,6 +336,11 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.interjection': 'interjección',
     'pos.participle': 'participio',
     'pos.gerund': 'gerundio',
+
+    // Tooltip
+    'tooltip.pos': 'parte de la oración',
+    'tooltip.definition': 'definición',
+    'tooltip.example': 'ejemplo',
 
     // Dictionary
     'dictionary.title': 'Diccionario',
@@ -410,6 +430,11 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.participle': 'participe',
     'pos.gerund': 'gérondif',
 
+    // Tooltip
+    'tooltip.pos': 'partie du discours',
+    'tooltip.definition': 'définition',
+    'tooltip.example': 'exemple',
+
     // Dictionary
     'dictionary.title': 'Dictionnaire',
     'dictionary.empty': 'Votre dictionnaire est vide',
@@ -497,6 +522,11 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.interjection': 'Interjektion',
     'pos.participle': 'Partizip',
     'pos.gerund': 'Gerundium',
+
+    // Tooltip
+    'tooltip.pos': 'Wortart',
+    'tooltip.definition': 'Definition',
+    'tooltip.example': 'Beispiel',
 
     // Dictionary
     'dictionary.title': 'Wörterbuch',

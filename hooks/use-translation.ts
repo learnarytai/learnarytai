@@ -7,7 +7,8 @@ import type { ParsedWord } from '@/lib/types'
 export function useTranslation(
   text: string,
   sourceLang: string,
-  targetLang: string
+  targetLang: string,
+  uiLang: string = 'en'
 ) {
   const [translatedText, setTranslatedText] = useState('')
   const [parsedWords, setParsedWords] = useState<ParsedWord[]>([])
@@ -65,7 +66,7 @@ export function useTranslation(
         const data = await res.json()
         setTranslatedText(data.translatedText)
         setDetectedLang(data.detectedLang || null)
-        setParsedWords([]) // Clear old analysis
+        setParsedWords([])
         setIsLoading(false)
 
         // Phase 2: Start analysis in background
@@ -103,6 +104,9 @@ export function useTranslation(
     ) => {
       const controller = new AbortController()
       analyzeControllerRef.current = controller
+
+      // 15s timeout for analysis
+      const timeout = setTimeout(() => controller.abort(), 15000)
       setIsAnalyzing(true)
 
       try {
@@ -114,6 +118,7 @@ export function useTranslation(
             translatedText: translated,
             sourceLang: srcLang,
             targetLang: tgtLang,
+            uiLang,
           }),
           signal: controller.signal,
         })
@@ -130,12 +135,13 @@ export function useTranslation(
         if (err instanceof Error && err.name === 'AbortError') return
         console.error('[Analysis] failed:', err)
       } finally {
+        clearTimeout(timeout)
         if (requestId === lastRequestRef.current) {
           setIsAnalyzing(false)
         }
       }
     },
-    []
+    [uiLang]
   )
 
   return { translatedText, parsedWords, isLoading, isAnalyzing, error, detectedLang }

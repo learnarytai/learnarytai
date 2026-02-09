@@ -2,59 +2,62 @@ import { createClient } from '@/lib/supabase/server'
 import { openrouter } from '@/lib/openrouter'
 import { NextRequest, NextResponse } from 'next/server'
 
-const ANALYSIS_SYSTEM = `You are a language teacher. You receive a source text and its translation.
-Your job: analyze EVERY word in the translated text.
+const VALID_POS = new Set([
+  'noun', 'adjective', 'verb', 'adverb', 'pronoun', 'numeral',
+  'preposition', 'conjunction', 'particle', 'interjection', 'participle', 'gerund',
+])
 
-For each word provide:
-- id: "w1", "w2", ... (sequential)
-- original: the corresponding word(s) from the source text
-- translation: the word in the translated text (include attached punctuation)
-- pos: part of speech (noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund)
-- explanation: detailed grammatical explanation in the TARGET language. Include:
-  * Why this translation/form is used
-  * Conjugation/declension details
-  * Gender, number, case (if applicable)
-  * Agreement rules
-
-CRITICAL: Return ONLY valid JSON. No markdown. No code blocks. No thinking tags.
-Format: { "words": [{ "id": "w1", "original": "...", "translation": "...", "pos": "noun", "explanation": "..." }, ...] }`
+const UI_LANG_NAMES: Record<string, string> = {
+  en: 'English', uk: 'Ukrainian', ru: 'Russian',
+  es: 'Spanish', fr: 'French', de: 'German',
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { sourceText, translatedText, sourceLang, targetLang } = await request.json()
+    const { sourceText, translatedText, sourceLang, targetLang, uiLang } = await request.json()
 
     if (!sourceText?.trim() || !translatedText?.trim()) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
-    // Auth check
     const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userPrompt = `Source (${sourceLang}): "${sourceText}"
-Translation (${targetLang}): "${translatedText}"
+    const uiLangName = UI_LANG_NAMES[uiLang] || 'English'
 
-Analyze EVERY word in the translation. Return JSON with "words" array.`
+    const systemPrompt = `Analyze each word in the translated text. For contractions (e.g. I'm, don't, it's), split into separate words.
+
+For each word return:
+- id: "w1","w2"...
+- original: source word(s)
+- translation: translated word
+- pos: ONE of: noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund
+- grammar: grammatical info (gender, number, case, tense, person)
+- definition: short definition of this word
+- example: one example sentence using this word
+
+ALL text in grammar, definition, example MUST be in ${uiLangName}.
+
+Return ONLY JSON: {"words":[...]}`
+
+    const userPrompt = `Source (${sourceLang}): "${sourceText}"
+Translation (${targetLang}): "${translatedText}"`
 
     const completion = await openrouter.chat.completions.create({
       model: process.env.OPENROUTER_MODEL || 'tngtech/deepseek-r1t2-chimera:free',
       messages: [
-        { role: 'system', content: ANALYSIS_SYSTEM },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.3,
-      max_tokens: 4000,
+      temperature: 0,
+      max_tokens: 2000,
     })
 
     const content = completion.choices[0]?.message?.content || ''
 
-    // Clean response
     let cleaned = content
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
@@ -69,13 +72,24 @@ Analyze EVERY word in the translation. Return JSON with "words" array.`
     cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
 
     const parsed = JSON.parse(cleaned)
-    const words = (parsed.words || []).map((w: Record<string, unknown>, i: number) => ({
-      id: w.id || `w${i + 1}`,
-      original: w.original || '',
-      translation: w.translation || '',
-      pos: w.pos || 'noun',
-      explanation: w.explanation || '',
-    }))
+    const words = (parsed.words || []).map((w: Record<string, unknown>, i: number) => {
+      let pos = String(w.pos || 'noun').toLowerCase().trim()
+      // Normalize compound POS like "pronoun+verb" to first valid one
+      if (!VALID_POS.has(pos)) {
+        const parts = pos.split(/[+\/,\s]+/)
+        pos = parts.find((p: string) => VALID_POS.has(p)) || 'noun'
+      }
+      return {
+        id: w.id || `w${i + 1}`,
+        original: w.original || '',
+        translation: w.translation || '',
+        pos,
+        grammar: w.grammar || '',
+        definition: w.definition || '',
+        example: w.example || '',
+        explanation: w.explanation || '',
+      }
+    })
 
     return NextResponse.json({ words })
   } catch (err) {

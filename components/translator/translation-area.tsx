@@ -19,7 +19,7 @@ const SESSION_TGT_LANG = 'translator-tgt-lang'
 
 export function TranslationArea() {
   const geoLang = useGeoLanguage()
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const { profile } = useProfile()
 
   const [sourceText, setSourceText] = useState(() => {
@@ -43,7 +43,6 @@ export function TranslationArea() {
   const [langInitialized, setLangInitialized] = useState(false)
   const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(true)
-  const [langNotification, setLangNotification] = useState<string | null>(null)
   const [tooltipData, setTooltipData] = useState<{
     word: ParsedWord
     position: { x: number; y: number }
@@ -81,7 +80,7 @@ export function TranslationArea() {
   }, [targetLang])
 
   const { translatedText, parsedWords, isLoading, isAnalyzing, error, detectedLang } =
-    useTranslation(sourceText, sourceLang, targetLang)
+    useTranslation(sourceText, sourceLang, targetLang, locale)
   const { addEntry } = useDictionary()
 
   // Auto-detect language: if API detected a different language, update selectors
@@ -100,10 +99,6 @@ export function TranslationArea() {
       } else {
         setSourceLang(detectedLang)
       }
-
-      setLangNotification(detectedLang)
-      const timer = setTimeout(() => setLangNotification(null), 3000)
-      return () => clearTimeout(timer)
     }
   }, [detectedLang, sourceLang, targetLang])
 
@@ -219,14 +214,8 @@ export function TranslationArea() {
       <div className="flex min-h-0 flex-1 gap-6 overflow-hidden px-2">
         {/* Left panel - Source */}
         <div className="flex flex-1 flex-col">
-          <div className="relative mb-3 flex items-center justify-center">
+          <div className="mb-3 flex justify-center">
             <LanguageSelector value={sourceLang} onChange={setSourceLang} />
-            {/* Language auto-detect notification */}
-            {langNotification && (
-              <span className="absolute right-0 animate-pulse text-xs text-primary">
-                {t('translator.langDetected')}
-              </span>
-            )}
           </div>
           <div className="a4-sheet relative flex-1 overflow-hidden">
             <TextEditor

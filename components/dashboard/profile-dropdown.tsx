@@ -48,17 +48,14 @@ export function ProfileDropdown({
     router.refresh()
   }
 
-  const handleLanguageChange = async (lang: string) => {
-    try {
-      await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interface_language: lang }),
-      })
-      onLanguageChange?.(lang)
-    } catch (err) {
-      console.error('Failed to update language:', err)
-    }
+  const handleLanguageChange = (lang: string) => {
+    // Update UI instantly, save to server in background
+    onLanguageChange?.(lang)
+    fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ interface_language: lang }),
+    }).catch((err) => console.error('Failed to update language:', err))
   }
 
   return (

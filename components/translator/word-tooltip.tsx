@@ -4,7 +4,6 @@ import { useRef, useEffect } from 'react'
 import { PART_OF_SPEECH_COLORS } from '@/lib/constants'
 import { useLanguage } from '@/components/providers/language-provider'
 import type { ParsedWord, PartOfSpeech } from '@/lib/types'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 
@@ -37,45 +36,55 @@ export function WordTooltip({ word, position, onAddToDictionary, onMouseEnter, o
   return (
     <div
       ref={tooltipRef}
-      className="fixed z-[100] w-80 rounded-xl border bg-popover p-4 shadow-xl"
+      className="fixed z-[100] w-80 rounded-xl border shadow-xl"
       style={{
         left: `${position.x}px`,
         top: `${position.y + 8}px`,
+        backgroundColor: `${color}15`,
+        borderColor: `${color}40`,
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-semibold">{word.original}</p>
-          <p className="text-sm text-muted-foreground">{word.translation}</p>
-        </div>
-        <Badge
-          variant="secondary"
-          style={{ backgroundColor: `${color}40`, color: '#333', border: `1px solid ${color}` }}
-          className="shrink-0 text-xs font-medium"
-        >
-          {t(`pos.${word.pos}`)}
-        </Badge>
+      <div className="p-4">
+        {/* Word + POS */}
+        <p className="text-base font-bold">{word.translation}</p>
+        <p className="text-sm text-muted-foreground">
+          {t('tooltip.pos')}: {t(`pos.${word.pos}`)}
+        </p>
+        {word.grammar && (
+          <p className="text-sm text-muted-foreground">{word.grammar}</p>
+        )}
+
+        {/* Definition */}
+        {word.definition && (
+          <div className="mt-3">
+            <p className="text-sm font-bold">{t('tooltip.definition')}:</p>
+            <p className="text-sm text-foreground/80">{word.definition}</p>
+          </div>
+        )}
+
+        {/* Example */}
+        {word.example && (
+          <div className="mt-2">
+            <p className="text-sm font-bold">{t('tooltip.example')}:</p>
+            <p className="text-sm italic text-foreground/80">{word.example}</p>
+          </div>
+        )}
       </div>
 
-      {word.explanation && (
-        <div className="mb-3 rounded-lg bg-muted/50 p-2.5">
-          <p className="text-xs leading-relaxed text-foreground/80">
-            {word.explanation}
-          </p>
-        </div>
-      )}
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full text-xs"
-        onClick={() => onAddToDictionary(word)}
-      >
-        <Plus className="mr-1 h-3 w-3" />
-        {t('translator.addToDictionary')}
-      </Button>
+      {/* Add to Dictionary */}
+      <div className="border-t px-4 py-2.5" style={{ borderColor: `${color}30` }}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-xs"
+          onClick={() => onAddToDictionary(word)}
+        >
+          <Plus className="mr-1 h-3 w-3" />
+          {t('translator.addToDictionary')}
+        </Button>
+      </div>
     </div>
   )
 }

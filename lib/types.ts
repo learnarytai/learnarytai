@@ -17,6 +17,9 @@ export interface ParsedWord {
   original: string
   translation: string
   pos: PartOfSpeech
+  grammar: string
+  definition: string
+  example: string
   explanation: string
 }
 
