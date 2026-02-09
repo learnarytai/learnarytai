@@ -42,8 +42,8 @@ export function WordTooltip({ word, position, isAnalyzing, onAddToDictionary, on
       style={{
         left: `${position.x}px`,
         top: `${position.y + 8}px`,
-        backgroundColor: `${color}15`,
-        borderColor: `${color}40`,
+        backgroundColor: `${color}20`,
+        borderColor: `${color}50`,
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -85,7 +85,7 @@ export function WordTooltip({ word, position, isAnalyzing, onAddToDictionary, on
 
       {/* Add to Dictionary - only when we have real data */}
       {hasData && (
-        <div className="border-t px-4 py-2.5" style={{ borderColor: `${color}30` }}>
+        <div className="border-t px-4 py-2.5" style={{ borderColor: `${color}40` }}>
           <Button
             variant="ghost"
             size="sm"

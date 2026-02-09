@@ -75,8 +75,8 @@ export function TextEditor({
             style={{
               backgroundColor: isHovered
                 ? color
-                  ? `${color}50`
-                  : 'rgba(255, 200, 0, 0.3)'
+                  ? `${color}60`
+                  : 'rgba(255, 200, 0, 0.35)'
                 : undefined,
               borderBottom: isHovered
                 ? `2px solid ${color || '#FFCC00'}`

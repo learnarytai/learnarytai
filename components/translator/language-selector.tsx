@@ -20,7 +20,7 @@ export function LanguageSelector({ value, onChange }: LanguageSelectorProps) {
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-auto gap-2 rounded-lg border-none bg-transparent px-3 text-sm font-medium shadow-none hover:bg-muted">
+      <SelectTrigger className="h-8 w-auto gap-2 rounded-lg border-none bg-transparent px-3 text-sm font-medium shadow-none hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
         <SelectValue>
           {t(`lang.${value}`)}
         </SelectValue>

@@ -12,15 +12,22 @@ const UI_LANG_NAMES: Record<string, string> = {
   it: 'Italian', es: 'Spanish', fr: 'French',
 }
 
+// Models to try in order (non-thinking models work best for JSON)
+const MODELS = [
+  process.env.OPENROUTER_MODEL,
+  'google/gemini-2.5-pro-exp-03-25:free',
+  'meta-llama/llama-4-maverick:free',
+].filter(Boolean) as string[]
+
 function extractJSON(raw: string): string {
-  // Remove think tags (DeepSeek R1)
+  // Remove think tags (DeepSeek R1 models)
   let cleaned = raw
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/gi, '')
     .trim()
 
-  // Find outermost { ... }
+  // Find outermost { ... } with brace depth tracking
   let depth = 0
   let start = -1
   for (let i = 0; i < cleaned.length; i++) {
@@ -35,14 +42,42 @@ function extractJSON(raw: string): string {
     }
   }
 
-  // Fallback: simple slice
-  const jsonStart = cleaned.indexOf('{')
-  const jsonEnd = cleaned.lastIndexOf('}')
-  if (jsonStart !== -1 && jsonEnd > jsonStart) {
-    return cleaned.slice(jsonStart, jsonEnd + 1)
+  throw new Error('No JSON object found')
+}
+
+async function tryAnalyze(
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  signal?: AbortSignal
+) {
+  console.log('[Analyze] Trying model:', model)
+
+  const completion = await openrouter.chat.completions.create({
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0,
+    max_tokens: 4000,
+  }, { signal })
+
+  const content = completion.choices[0]?.message?.content || ''
+  console.log('[Analyze] Response from', model, '- length:', content.length)
+
+  if (!content || content.length < 10) {
+    throw new Error(`Empty response from ${model}`)
   }
 
-  throw new Error('No JSON object found in response')
+  const jsonStr = extractJSON(content)
+  const parsed = JSON.parse(jsonStr)
+
+  if (!parsed.words || !Array.isArray(parsed.words) || parsed.words.length === 0) {
+    throw new Error(`No words in response from ${model}`)
+  }
+
+  return parsed.words
 }
 
 export async function POST(request: NextRequest) {
@@ -62,50 +97,45 @@ export async function POST(request: NextRequest) {
     const uiLangName = UI_LANG_NAMES[uiLang] || 'English'
     const targetLangName = UI_LANG_NAMES[targetLang] || targetLang
 
-    const systemPrompt = `You are a linguistic analyzer. Analyze each word in the translated text.
+    const systemPrompt = `You are a linguistic analyzer. Return ONLY valid JSON, no other text.
 
-For each word return a JSON object with:
-- id: "w1","w2","w3"... sequential
-- original: the corresponding source word
-- translation: the translated word
-- pos: exactly ONE of: noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund
-- grammar: grammatical info (gender, number, tense, person, case) in ${uiLangName}
-- definition: brief definition in ${uiLangName}
-- example: one example sentence using this word in ${targetLangName}
+Analyze each word in the translated text. Return JSON:
+{"words":[{"id":"w1","original":"source word","translation":"translated word","pos":"verb","grammar":"info","definition":"meaning","example":"sentence"}]}
 
-IMPORTANT: Return ONLY valid JSON in this exact format, no other text:
-{"words":[{"id":"w1","original":"...","translation":"...","pos":"...","grammar":"...","definition":"...","example":"..."}]}`
+Rules:
+- pos must be ONE of: noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund
+- grammar: grammatical info (tense, person, number, gender, case) in ${uiLangName}
+- definition: brief meaning in ${uiLangName}
+- example: example sentence using this word in ${targetLangName}
+- id: sequential "w1","w2","w3"...`
 
     const userPrompt = `Source (${sourceLang}): "${sourceText}"
-Translation (${targetLang}): "${translatedText}"`
+Translation (${targetLang}): "${translatedText}"
 
-    console.log('[Analyze] Requesting analysis for:', sourceText.substring(0, 50))
+Return ONLY JSON.`
 
-    const completion = await openrouter.chat.completions.create({
-      model: process.env.OPENROUTER_MODEL || 'tngtech/deepseek-r1t2-chimera:free',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0,
-      max_tokens: 3000,
-    })
+    // Try each model in order
+    let rawWords: Record<string, unknown>[] | null = null
+    let lastError = ''
 
-    const content = completion.choices[0]?.message?.content || ''
-    console.log('[Analyze] Raw response length:', content.length)
+    for (const model of MODELS) {
+      try {
+        rawWords = await tryAnalyze(model, systemPrompt, userPrompt)
+        console.log('[Analyze] Success with', model, '-', rawWords!.length, 'words')
+        break
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err)
+        console.error('[Analyze] Failed with', model, ':', lastError)
+      }
+    }
 
-    if (!content) {
-      console.error('[Analyze] Empty response from model')
+    if (!rawWords) {
+      console.error('[Analyze] All models failed. Last error:', lastError)
       return NextResponse.json({ words: [] })
     }
 
-    const jsonStr = extractJSON(content)
-    console.log('[Analyze] Extracted JSON length:', jsonStr.length)
-
-    const parsed = JSON.parse(jsonStr)
-    const words = (parsed.words || []).map((w: Record<string, unknown>, i: number) => {
+    const words = rawWords.map((w, i) => {
       let pos = String(w.pos || 'noun').toLowerCase().trim()
-      // Normalize compound POS like "pronoun+verb" to first valid one
       if (!VALID_POS.has(pos)) {
         const parts = pos.split(/[+\/,\s]+/)
         pos = parts.find((p: string) => VALID_POS.has(p)) || 'noun'
@@ -122,11 +152,11 @@ Translation (${targetLang}): "${translatedText}"`
       }
     })
 
-    console.log('[Analyze] Parsed', words.length, 'words. POS:', words.map((w: { pos: string }) => w.pos).join(', '))
+    console.log('[Analyze] Final:', words.map((w: { translation: string; pos: string }) => `${w.translation}(${w.pos})`).join(', '))
 
     return NextResponse.json({ words })
   } catch (err) {
-    console.error('[Analyze] Error:', err instanceof Error ? err.message : err)
+    console.error('[Analyze] Unexpected error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ words: [] })
   }
 }

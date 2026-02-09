@@ -117,7 +117,7 @@ export function useTranslation(
       const controller = new AbortController()
       analyzeControllerRef.current = controller
 
-      const timeout = setTimeout(() => controller.abort(), 30000)
+      const timeout = setTimeout(() => controller.abort(), 60000)
       setIsAnalyzing(true)
 
       try {
