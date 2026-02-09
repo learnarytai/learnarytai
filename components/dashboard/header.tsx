@@ -3,26 +3,27 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { Profile } from '@/lib/types'
 import { ProfileDropdown } from './profile-dropdown'
 import { BookOpen, Languages } from 'lucide-react'
 
 interface HeaderProps {
   profile: Profile | null
+  onLanguageChange?: (lang: string) => void
 }
 
-export function Header({ profile }: HeaderProps) {
+export function Header({ profile, onLanguageChange }: HeaderProps) {
   const pathname = usePathname()
+  const { t } = useLanguage()
 
   return (
     <header className="sticky top-0 z-50 px-4 pt-3">
       <div className="mx-auto flex h-12 max-w-5xl items-center justify-between rounded-2xl border bg-background/80 px-4 shadow-sm backdrop-blur-md">
-        {/* Logo */}
         <Link href="/translator" className="text-base font-bold tracking-tight">
           Learnary Tai
         </Link>
 
-        {/* Center toggle */}
         <div className="flex items-center rounded-xl bg-muted p-1">
           <Link
             href="/translator"
@@ -34,7 +35,7 @@ export function Header({ profile }: HeaderProps) {
             )}
           >
             <Languages className="h-3.5 w-3.5" />
-            Translator
+            {t('nav.translator')}
           </Link>
           <Link
             href="/dictionary"
@@ -46,12 +47,11 @@ export function Header({ profile }: HeaderProps) {
             )}
           >
             <BookOpen className="h-3.5 w-3.5" />
-            Dictionary
+            {t('nav.dictionary')}
           </Link>
         </div>
 
-        {/* Profile */}
-        <ProfileDropdown profile={profile} />
+        <ProfileDropdown profile={profile} onLanguageChange={onLanguageChange} />
       </div>
     </header>
   )

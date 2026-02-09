@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from 'react'
 import { PART_OF_SPEECH_COLORS } from '@/lib/constants'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { ParsedWord, PartOfSpeech } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,8 +17,8 @@ interface WordTooltipProps {
 export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipProps) {
   const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech] || '#e5e5e5'
   const tooltipRef = useRef<HTMLDivElement>(null)
+  const { t } = useLanguage()
 
-  // Adjust position to stay within viewport
   useEffect(() => {
     if (!tooltipRef.current) return
     const rect = tooltipRef.current.getBoundingClientRect()
@@ -40,7 +41,6 @@ export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipPr
         top: `${position.y + 8}px`,
       }}
     >
-      {/* Header: word pair + POS badge */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-base font-semibold">{word.original}</p>
@@ -55,7 +55,6 @@ export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipPr
         </Badge>
       </div>
 
-      {/* Grammar explanation */}
       {word.explanation && (
         <div className="mb-3 rounded-lg bg-muted/50 p-2.5">
           <p className="text-xs leading-relaxed text-foreground/80">
@@ -64,7 +63,6 @@ export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipPr
         </div>
       )}
 
-      {/* Add to dictionary button */}
       <Button
         variant="outline"
         size="sm"
@@ -72,7 +70,7 @@ export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipPr
         onClick={() => onAddToDictionary(word)}
       >
         <Plus className="mr-1 h-3 w-3" />
-        Add to Dictionary
+        {t('translator.addToDictionary')}
       </Button>
     </div>
   )

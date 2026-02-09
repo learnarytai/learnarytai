@@ -2,6 +2,7 @@
 
 import { useRef, useCallback } from 'react'
 import { PART_OF_SPEECH_COLORS } from '@/lib/constants'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { ParsedWord, PartOfSpeech } from '@/lib/types'
 
 interface TextEditorProps {
@@ -28,6 +29,7 @@ export function TextEditor({
   onEditRequest,
 }: TextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
+  const { t } = useLanguage()
 
   const handleInput = useCallback(() => {
     if (editorRef.current && onChange) {
@@ -39,7 +41,6 @@ export function TextEditor({
     onWordHover(null)
   }, [onWordHover])
 
-  // Editable input mode
   if (mode === 'input') {
     return (
       <div className="relative h-full">
@@ -60,7 +61,6 @@ export function TextEditor({
     )
   }
 
-  // Source mode — highlighted original words (click to edit)
   if (mode === 'source') {
     return (
       <div
@@ -102,20 +102,19 @@ export function TextEditor({
     )
   }
 
-  // Output mode — highlighted translation words
   const renderHighlightedText = () => {
     if (isLoading) {
       return (
         <div className="flex items-center gap-2 text-muted-foreground">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-sm">Translating...</span>
+          <span className="text-sm">{t('translator.translating')}</span>
         </div>
       )
     }
 
     if (!text) {
       return (
-        <span className="text-muted-foreground/40">Translation will appear here...</span>
+        <span className="text-muted-foreground/40">{t('translator.outputPlaceholder')}</span>
       )
     }
 

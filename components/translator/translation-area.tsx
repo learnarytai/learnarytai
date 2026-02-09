@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from '@/hooks/use-translation'
 import { useDictionary } from '@/hooks/use-dictionary'
 import { useGeoLanguage } from '@/hooks/use-geo-language'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { Profile, ParsedWord } from '@/lib/types'
 import { LanguageSelector } from './language-selector'
 import { TextEditor } from './text-editor'
@@ -18,12 +19,18 @@ interface TranslationAreaProps {
 
 export function TranslationArea({ profile }: TranslationAreaProps) {
   const geoLang = useGeoLanguage()
+  const { t } = useLanguage()
   const [sourceText, setSourceText] = useState('')
   const [sourceLang, setSourceLang] = useState('en')
   const [targetLang, setTargetLang] = useState('uk')
   const [langInitialized, setLangInitialized] = useState(false)
+  const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(true)
+  const [tooltipData, setTooltipData] = useState<{
+    word: ParsedWord
+    position: { x: number; y: number }
+  } | null>(null)
 
-  // Set languages from geo detection after mount (avoids hydration mismatch)
   useEffect(() => {
     if (!langInitialized && geoLang !== 'en') {
       setSourceLang(geoLang)
@@ -31,12 +38,6 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
       setLangInitialized(true)
     }
   }, [geoLang, langInitialized])
-  const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(true)
-  const [tooltipData, setTooltipData] = useState<{
-    word: ParsedWord
-    position: { x: number; y: number }
-  } | null>(null)
 
   const { translatedText, parsedWords, isLoading, error } = useTranslation(
     sourceText,
@@ -45,7 +46,6 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
   )
   const { addEntry } = useDictionary()
 
-  // When translation completes, switch source to highlighted mode
   const hasTranslation = parsedWords.length > 0 && !isLoading
   const sourceMode = hasTranslation && !isEditing ? 'source' : 'input'
 
@@ -96,13 +96,13 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
         example_sentence: null,
       })
       if (success) {
-        toast.success(`"${word.original}" added to dictionary`)
+        toast.success(`"${word.original}" ${t('dictionary.added')}`)
       } else {
-        toast.error('Failed to add word')
+        toast.error(t('dictionary.failedAdd'))
       }
       setTooltipData(null)
     },
-    [addEntry, sourceLang, targetLang]
+    [addEntry, sourceLang, targetLang, t]
   )
 
   const charUsed = profile?.characters_used ?? 0
@@ -118,9 +118,7 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
         </div>
       )}
 
-      {/* Two A4 sheets */}
       <div className="flex min-h-0 flex-1 gap-6 overflow-hidden px-2">
-        {/* Source sheet */}
         <div className="flex flex-1 flex-col">
           <div className="mb-3 flex items-center justify-center gap-2">
             <LanguageSelector value={sourceLang} onChange={setSourceLang} />
@@ -128,7 +126,7 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
               <button
                 onClick={handleEditRequest}
                 className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                title="Edit text"
+                title={t('translator.editText')}
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -140,7 +138,7 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
               text={sourceText}
               parsedWords={parsedWords}
               hoveredWordId={hoveredWordId}
-              placeholder="Type or paste text here..."
+              placeholder={t('translator.inputPlaceholder')}
               onChange={handleSourceTextChange}
               onWordHover={handleWordHover}
               onEditRequest={handleEditRequest}
@@ -148,7 +146,6 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
           </div>
         </div>
 
-        {/* Swap button */}
         <div className="flex items-center">
           <button
             onClick={handleSwapLanguages}
@@ -158,7 +155,6 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
           </button>
         </div>
 
-        {/* Target sheet */}
         <div className="flex flex-1 flex-col">
           <div className="mb-3 flex justify-center">
             <LanguageSelector value={targetLang} onChange={setTargetLang} />
@@ -176,7 +172,6 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
         </div>
       </div>
 
-      {/* Fixed character counter at bottom */}
       <div className="sticky bottom-0 mt-3 flex items-center justify-center gap-3 rounded-xl border bg-background/80 px-4 py-2 backdrop-blur-sm">
         <div className="h-1.5 w-32 overflow-hidden rounded-full bg-secondary">
           <div
@@ -193,12 +188,11 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
         </div>
         <span className="text-xs text-muted-foreground">
           {tier === 'pro'
-            ? `${charUsed.toLocaleString()} characters (Pro)`
+            ? `${charUsed.toLocaleString()} ${t('translator.characters')} (Pro)`
             : `${charUsed.toLocaleString()} / ${charLimit.toLocaleString()}`}
         </span>
       </div>
 
-      {/* Tooltip */}
       {tooltipData && (
         <WordTooltip
           word={tooltipData.word}

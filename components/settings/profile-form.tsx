@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Profile } from '@/lib/types'
+import { useLanguage } from '@/components/providers/language-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,7 @@ interface ProfileFormProps {
 export function ProfileForm({ profile }: ProfileFormProps) {
   const [fullName, setFullName] = useState(profile.full_name || '')
   const [saving, setSaving] = useState(false)
+  const { t } = useLanguage()
 
   const handleSave = async () => {
     setSaving(true)
@@ -25,12 +27,12 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         body: JSON.stringify({ full_name: fullName }),
       })
       if (res.ok) {
-        toast.success('Profile updated')
+        toast.success(t('settings.profileUpdated'))
       } else {
-        toast.error('Failed to update profile')
+        toast.error(t('settings.updateFailed'))
       }
     } catch {
-      toast.error('An error occurred')
+      toast.error(t('settings.updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -39,15 +41,15 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile</CardTitle>
+        <CardTitle>{t('settings.profile')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('auth.email')}</Label>
           <Input id="email" value={profile.email || ''} disabled />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
+          <Label htmlFor="name">{t('settings.fullName')}</Label>
           <Input
             id="name"
             value={fullName}
@@ -55,7 +57,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           />
         </div>
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? t('settings.saving') : t('settings.saveChanges')}
         </Button>
       </CardContent>
     </Card>

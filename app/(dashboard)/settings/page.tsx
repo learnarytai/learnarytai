@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useLanguage } from '@/components/providers/language-provider'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { SubscriptionCard } from '@/components/settings/subscription-card'
 import type { Profile } from '@/lib/types'
@@ -9,6 +10,7 @@ import type { Profile } from '@/lib/types'
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const supabase = createClient()
+  const { t } = useLanguage()
 
   useEffect(() => {
     async function loadProfile() {
@@ -17,7 +19,6 @@ export default function SettingsPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      // Use server API to ensure profile exists (bypasses RLS)
       try {
         const res = await fetch('/api/ensure-profile', { method: 'POST' })
         if (res.ok) {
@@ -26,7 +27,7 @@ export default function SettingsPage() {
           return
         }
       } catch {
-        // fallback: spinner stays
+        // spinner stays
       }
     }
     loadProfile()
@@ -42,7 +43,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
       <ProfileForm profile={profile} />
       <SubscriptionCard profile={profile} />
     </div>

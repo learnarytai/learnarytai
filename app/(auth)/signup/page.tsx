@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -8,10 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-
 import { toast } from 'sonner'
 
 export default function SignupPage() {
+  const router = useRouter()
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,15 +22,32 @@ export default function SignupPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         },
       })
+
       if (error) {
-        toast.error(error.message)
+        // Handle specific Supabase errors
+        if (error.message.includes('already registered')) {
+          toast.error('This email is already registered. Try signing in instead.')
+        } else if (error.message.includes('disabled')) {
+          toast.error('Email registration is temporarily unavailable. Please use Google sign-in.')
+        } else {
+          toast.error(error.message)
+        }
+      } else if (data.user && !data.user.identities?.length) {
+        // User exists but identities empty = already registered
+        toast.error('This email is already registered. Try signing in instead.')
+      } else if (data.session) {
+        // Email confirmation disabled — user is logged in immediately
+        // Create profile via API
+        await fetch('/api/ensure-profile', { method: 'POST' })
+        router.push('/translator')
+        router.refresh()
       } else {
         toast.success('Check your email to confirm your account')
       }
