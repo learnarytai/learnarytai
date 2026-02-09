@@ -1,6 +1,7 @@
 'use client'
 
 import { LANGUAGES } from '@/lib/constants'
+import { useLanguage } from '@/components/providers/language-provider'
 import {
   Select,
   SelectContent,
@@ -15,19 +16,19 @@ interface LanguageSelectorProps {
 }
 
 export function LanguageSelector({ value, onChange }: LanguageSelectorProps) {
-  const selected = LANGUAGES.find((l) => l.code === value)
+  const { t } = useLanguage()
 
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="h-8 w-auto gap-2 rounded-lg border-none bg-transparent px-3 text-sm font-medium shadow-none hover:bg-muted">
         <SelectValue>
-          {selected && <span>{selected.name}</span>}
+          {t(`lang.${value}`)}
         </SelectValue>
       </SelectTrigger>
       <SelectContent className="rounded-xl">
         {LANGUAGES.map((lang) => (
           <SelectItem key={lang.code} value={lang.code} className="rounded-lg">
-            <span>{lang.name}</span>
+            {t(`lang.${lang.code}`)}
           </SelectItem>
         ))}
       </SelectContent>

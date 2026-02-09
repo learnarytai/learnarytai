@@ -1,65 +1,137 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from '@/hooks/use-translation'
 import { useDictionary } from '@/hooks/use-dictionary'
 import { useGeoLanguage } from '@/hooks/use-geo-language'
 import { useLanguage } from '@/components/providers/language-provider'
-import type { Profile, ParsedWord } from '@/lib/types'
+import { useProfile } from '@/components/providers/profile-provider'
+import type { ParsedWord } from '@/lib/types'
 import { LanguageSelector } from './language-selector'
 import { TextEditor } from './text-editor'
 import { WordTooltip } from './word-tooltip'
-import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { ArrowLeftRight, Pencil } from 'lucide-react'
+import { ArrowLeftRight } from 'lucide-react'
 
-interface TranslationAreaProps {
-  profile: Profile | null
-}
+const SESSION_KEY = 'translator-source-text'
+const SESSION_SRC_LANG = 'translator-src-lang'
+const SESSION_TGT_LANG = 'translator-tgt-lang'
 
-export function TranslationArea({ profile }: TranslationAreaProps) {
+export function TranslationArea() {
   const geoLang = useGeoLanguage()
   const { t } = useLanguage()
-  const [sourceText, setSourceText] = useState('')
-  const [sourceLang, setSourceLang] = useState('en')
-  const [targetLang, setTargetLang] = useState('uk')
+  const { profile } = useProfile()
+
+  const [sourceText, setSourceText] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem(SESSION_KEY) || ''
+    }
+    return ''
+  })
+  const [sourceLang, setSourceLang] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem(SESSION_SRC_LANG) || 'en'
+    }
+    return 'en'
+  })
+  const [targetLang, setTargetLang] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem(SESSION_TGT_LANG) || 'uk'
+    }
+    return 'uk'
+  })
   const [langInitialized, setLangInitialized] = useState(false)
   const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(true)
+  const [langNotification, setLangNotification] = useState<string | null>(null)
   const [tooltipData, setTooltipData] = useState<{
     word: ParsedWord
     position: { x: number; y: number }
   } | null>(null)
 
+  // Track whether we already handled a particular detectedLang
+  const lastHandledDetection = useRef<string | null>(null)
+
+  // Geo language init (only if no saved preference)
   useEffect(() => {
     if (!langInitialized && geoLang !== 'en') {
-      setSourceLang(geoLang)
-      setTargetLang('en')
+      const hasSaved =
+        typeof window !== 'undefined' && sessionStorage.getItem(SESSION_SRC_LANG)
+      if (!hasSaved) {
+        setSourceLang(geoLang)
+        setTargetLang('en')
+      }
       setLangInitialized(true)
     }
   }, [geoLang, langInitialized])
 
-  const { translatedText, parsedWords, isLoading, error } = useTranslation(
-    sourceText,
-    sourceLang,
-    targetLang
-  )
+  // Persist to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_KEY, sourceText)
+  }, [sourceText])
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_SRC_LANG, sourceLang)
+  }, [sourceLang])
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_TGT_LANG, targetLang)
+  }, [targetLang])
+
+  const { translatedText, parsedWords, isLoading, error, detectedLang } =
+    useTranslation(sourceText, sourceLang, targetLang)
   const { addEntry } = useDictionary()
 
-  const hasTranslation = parsedWords.length > 0 && !isLoading
-  const sourceMode = hasTranslation && !isEditing ? 'source' : 'input'
+  // Auto-detect language: if API detected a different language, update selectors
+  useEffect(() => {
+    if (
+      detectedLang &&
+      detectedLang !== sourceLang &&
+      detectedLang !== lastHandledDetection.current
+    ) {
+      lastHandledDetection.current = detectedLang
 
-  const handleSwapLanguages = useCallback(() => {
-    setSourceLang(targetLang)
-    setTargetLang(sourceLang)
-    setSourceText(translatedText)
-    setIsEditing(true)
-  }, [sourceLang, targetLang, translatedText])
+      if (detectedLang === targetLang) {
+        // User types in target language - swap
+        setSourceLang(targetLang)
+        setTargetLang(sourceLang)
+      } else {
+        setSourceLang(detectedLang)
+      }
 
+      setLangNotification(detectedLang)
+      const timer = setTimeout(() => setLangNotification(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [detectedLang, sourceLang, targetLang])
+
+  // Reset detection tracking when user manually changes source text
   const handleSourceTextChange = useCallback((text: string) => {
     setSourceText(text)
     setIsEditing(true)
+    lastHandledDetection.current = null
   }, [])
+
+  const hasTranslation = parsedWords.length > 0 && !isLoading
+  const hasPlainTranslation = translatedText.length > 0 && !isLoading
+  const sourceMode = (hasTranslation || hasPlainTranslation) && !isEditing ? 'source' : 'input'
+
+  // Switch to source mode when translation completes
+  useEffect(() => {
+    if (hasPlainTranslation) {
+      setIsEditing(false)
+    }
+  }, [hasPlainTranslation])
+
+  const handleSwapLanguages = useCallback(() => {
+    const newSrc = targetLang
+    const newTgt = sourceLang
+    setSourceLang(newSrc)
+    setTargetLang(newTgt)
+    setSourceText(translatedText)
+    setIsEditing(true)
+    lastHandledDetection.current = null
+  }, [sourceLang, targetLang, translatedText])
 
   const handleEditRequest = useCallback(() => {
     setIsEditing(true)
@@ -105,10 +177,8 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
     [addEntry, sourceLang, targetLang, t]
   )
 
-  const charUsed = profile?.characters_used ?? 0
   const charLimit = profile?.characters_limit ?? 1000
   const tier = profile?.subscription_tier ?? 'free'
-  const charPercent = tier === 'pro' ? 0 : (charUsed / charLimit) * 100
 
   return (
     <div className="flex h-[calc(100vh-5rem)] flex-col">
@@ -119,20 +189,18 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
       )}
 
       <div className="flex min-h-0 flex-1 gap-6 overflow-hidden px-2">
+        {/* Left panel - Source */}
         <div className="flex flex-1 flex-col">
-          <div className="mb-3 flex items-center justify-center gap-2">
+          <div className="relative mb-3 flex items-center justify-center">
             <LanguageSelector value={sourceLang} onChange={setSourceLang} />
-            {sourceMode === 'source' && (
-              <button
-                onClick={handleEditRequest}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                title={t('translator.editText')}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
+            {/* Language auto-detect notification */}
+            {langNotification && (
+              <span className="absolute right-0 animate-pulse text-xs text-primary">
+                {t(`lang.${langNotification}`)}
+              </span>
             )}
           </div>
-          <div className="a4-sheet flex-1 overflow-y-auto">
+          <div className="a4-sheet relative flex-1 overflow-y-auto">
             <TextEditor
               mode={sourceMode}
               text={sourceText}
@@ -143,9 +211,16 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
               onWordHover={handleWordHover}
               onEditRequest={handleEditRequest}
             />
+            {/* Character counter - bottom right */}
+            <div className="pointer-events-none absolute bottom-2 right-3 select-none text-xs text-muted-foreground/50">
+              {tier === 'pro'
+                ? sourceText.length.toLocaleString()
+                : `${sourceText.length.toLocaleString()} / ${charLimit.toLocaleString()}`}
+            </div>
           </div>
         </div>
 
+        {/* Swap button */}
         <div className="flex items-center">
           <button
             onClick={handleSwapLanguages}
@@ -155,6 +230,7 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
           </button>
         </div>
 
+        {/* Right panel - Translation */}
         <div className="flex flex-1 flex-col">
           <div className="mb-3 flex justify-center">
             <LanguageSelector value={targetLang} onChange={setTargetLang} />
@@ -170,27 +246,6 @@ export function TranslationArea({ profile }: TranslationAreaProps) {
             />
           </div>
         </div>
-      </div>
-
-      <div className="sticky bottom-0 mt-3 flex items-center justify-center gap-3 rounded-xl border bg-background/80 px-4 py-2 backdrop-blur-sm">
-        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-secondary">
-          <div
-            className={cn(
-              'h-full rounded-full transition-all',
-              charPercent > 90
-                ? 'bg-destructive'
-                : charPercent > 70
-                  ? 'bg-yellow-500'
-                  : 'bg-primary'
-            )}
-            style={{ width: tier === 'pro' ? '0%' : `${Math.min(charPercent, 100)}%` }}
-          />
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {tier === 'pro'
-            ? `${charUsed.toLocaleString()} ${t('translator.characters')} (Pro)`
-            : `${charUsed.toLocaleString()} / ${charLimit.toLocaleString()}`}
-        </span>
       </div>
 
       {tooltipData && (

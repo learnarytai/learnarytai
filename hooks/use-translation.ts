@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDebounce } from './use-debounce'
 import type { TranslationResult, ParsedWord } from '@/lib/types'
 
@@ -13,17 +13,21 @@ export function useTranslation(
   const [parsedWords, setParsedWords] = useState<ParsedWord[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [detectedLang, setDetectedLang] = useState<string | null>(null)
 
-  const debouncedText = useDebounce(text, 300)
+  const debouncedText = useDebounce(text, 500)
+  const lastRequestRef = useRef(0)
 
   useEffect(() => {
     if (!debouncedText.trim()) {
       setTranslatedText('')
       setParsedWords([])
       setError(null)
+      setDetectedLang(null)
       return
     }
 
+    const requestId = ++lastRequestRef.current
     const controller = new AbortController()
 
     async function translate() {
@@ -42,6 +46,9 @@ export function useTranslation(
           signal: controller.signal,
         })
 
+        // Ignore stale responses
+        if (requestId !== lastRequestRef.current) return
+
         if (!res.ok) {
           const data = await res.json()
           throw new Error(data.error || 'Translation failed')
@@ -50,12 +57,16 @@ export function useTranslation(
         const data: TranslationResult = await res.json()
         setTranslatedText(data.translatedText)
         setParsedWords(data.words || [])
+        setDetectedLang(data.detectedLang || null)
       } catch (err) {
+        if (requestId !== lastRequestRef.current) return
         if (err instanceof Error && err.name !== 'AbortError') {
           setError(err.message)
         }
       } finally {
-        setIsLoading(false)
+        if (requestId === lastRequestRef.current) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -64,5 +75,5 @@ export function useTranslation(
     return () => controller.abort()
   }, [debouncedText, sourceLang, targetLang])
 
-  return { translatedText, parsedWords, isLoading, error }
+  return { translatedText, parsedWords, isLoading, error, detectedLang }
 }

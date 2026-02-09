@@ -1,37 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useProfile } from '@/components/providers/profile-provider'
 import { useLanguage } from '@/components/providers/language-provider'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { SubscriptionCard } from '@/components/settings/subscription-card'
-import type { Profile } from '@/lib/types'
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const supabase = createClient()
+  const { profile } = useProfile()
   const { t } = useLanguage()
-
-  useEffect(() => {
-    async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      try {
-        const res = await fetch('/api/ensure-profile', { method: 'POST' })
-        if (res.ok) {
-          const data = await res.json()
-          setProfile(data as Profile)
-          return
-        }
-      } catch {
-        // spinner stays
-      }
-    }
-    loadProfile()
-  }, [supabase])
 
   if (!profile) {
     return (

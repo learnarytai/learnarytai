@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import type { DictionaryEntry } from '@/lib/types'
 
 export function useDictionary() {

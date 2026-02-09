@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useCallback } from 'react'
 import { t, type Locale } from '@/lib/i18n'
 
 interface LanguageContextType {
@@ -17,24 +17,20 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export function LanguageProvider({
   children,
-  initialLocale = 'en',
+  locale,
+  onLocaleChange,
 }: {
   children: React.ReactNode
-  initialLocale?: Locale
+  locale: Locale
+  onLocaleChange: (locale: Locale) => void
 }) {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale)
-
-  const setLocale = useCallback((newLocale: Locale) => {
-    setLocaleState(newLocale)
-  }, [])
-
   const translate = useCallback(
     (key: string) => t(locale, key),
     [locale]
   )
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t: translate }}>
+    <LanguageContext.Provider value={{ locale, setLocale: onLocaleChange, t: translate }}>
       {children}
     </LanguageContext.Provider>
   )

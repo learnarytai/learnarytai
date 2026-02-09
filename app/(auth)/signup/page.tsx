@@ -13,7 +13,6 @@ import { toast } from 'sonner'
 
 export default function SignupPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,6 +21,7 @@ export default function SignupPage() {
     e.preventDefault()
     setLoading(true)
     try {
+      const supabase = createClient()
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -58,6 +58,7 @@ export default function SignupPage() {
   }
 
   const handleGoogle = async () => {
+    const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

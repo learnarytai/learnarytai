@@ -62,6 +62,15 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.freePlan': 'Free Plan',
     'settings.proPlan': 'Pro Plan',
     'settings.upgradeToPro': 'Upgrade to Pro',
+
+    // Language names (for translator selectors)
+    'lang.uk': 'Ukrainian',
+    'lang.en': 'English',
+    'lang.ru': 'Russian',
+    'lang.es': 'Spanish',
+    'lang.it': 'Italian',
+    'lang.fr': 'French',
+    'lang.de': 'German',
   },
 
   uk: {
@@ -125,6 +134,15 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.freePlan': 'Безкоштовний план',
     'settings.proPlan': 'Pro план',
     'settings.upgradeToPro': 'Оновити до Pro',
+
+    // Language names
+    'lang.uk': 'Українська',
+    'lang.en': 'Англійська',
+    'lang.ru': 'Російська',
+    'lang.es': 'Іспанська',
+    'lang.it': 'Італійська',
+    'lang.fr': 'Французька',
+    'lang.de': 'Німецька',
   },
 
   ru: {
@@ -188,6 +206,15 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.freePlan': 'Бесплатный план',
     'settings.proPlan': 'Pro план',
     'settings.upgradeToPro': 'Перейти на Pro',
+
+    // Language names
+    'lang.uk': 'Украинский',
+    'lang.en': 'Английский',
+    'lang.ru': 'Русский',
+    'lang.es': 'Испанский',
+    'lang.it': 'Итальянский',
+    'lang.fr': 'Французский',
+    'lang.de': 'Немецкий',
   },
 
   es: {
@@ -251,6 +278,15 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.freePlan': 'Plan gratuito',
     'settings.proPlan': 'Plan Pro',
     'settings.upgradeToPro': 'Actualizar a Pro',
+
+    // Language names
+    'lang.uk': 'Ucraniano',
+    'lang.en': 'Inglés',
+    'lang.ru': 'Ruso',
+    'lang.es': 'Español',
+    'lang.it': 'Italiano',
+    'lang.fr': 'Francés',
+    'lang.de': 'Alemán',
   },
 
   fr: {
@@ -314,6 +350,15 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.freePlan': 'Plan gratuit',
     'settings.proPlan': 'Plan Pro',
     'settings.upgradeToPro': 'Passer au Pro',
+
+    // Language names
+    'lang.uk': 'Ukrainien',
+    'lang.en': 'Anglais',
+    'lang.ru': 'Russe',
+    'lang.es': 'Espagnol',
+    'lang.it': 'Italien',
+    'lang.fr': 'Français',
+    'lang.de': 'Allemand',
   },
 
   de: {
@@ -377,6 +422,15 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.freePlan': 'Kostenloser Plan',
     'settings.proPlan': 'Pro-Plan',
     'settings.upgradeToPro': 'Auf Pro upgraden',
+
+    // Language names
+    'lang.uk': 'Ukrainisch',
+    'lang.en': 'Englisch',
+    'lang.ru': 'Russisch',
+    'lang.es': 'Spanisch',
+    'lang.it': 'Italienisch',
+    'lang.fr': 'Französisch',
+    'lang.de': 'Deutsch',
   },
 }
 

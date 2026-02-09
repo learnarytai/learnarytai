@@ -10,6 +10,11 @@ export function getAdminClient(): any {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
+    console.error('[AdminClient] Missing env vars:', {
+      hasUrl: !!url,
+      hasKey: !!key,
+      keyLength: key?.length ?? 0,
+    })
     throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY for admin client')
   }
 

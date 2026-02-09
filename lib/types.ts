@@ -23,6 +23,7 @@ export interface ParsedWord {
 export interface TranslationResult {
   translatedText: string
   words: ParsedWord[]
+  detectedLang?: string
 }
 
 export interface Profile {

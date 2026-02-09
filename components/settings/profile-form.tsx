@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { Profile } from '@/lib/types'
 import { useLanguage } from '@/components/providers/language-provider'
+import { useProfile } from '@/components/providers/profile-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +18,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   const [fullName, setFullName] = useState(profile.full_name || '')
   const [saving, setSaving] = useState(false)
   const { t } = useLanguage()
+  const { refreshProfile } = useProfile()
 
   const handleSave = async () => {
     setSaving(true)
@@ -28,6 +30,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       })
       if (res.ok) {
         toast.success(t('settings.profileUpdated'))
+        // Refresh profile in layout so header shows new name
+        refreshProfile()
       } else {
         toast.error(t('settings.updateFailed'))
       }

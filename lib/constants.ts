@@ -20,6 +20,7 @@ export const LANGUAGES = [
   { code: 'es', name: 'Spanish' },
   { code: 'it', name: 'Italian' },
   { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
 ] as const
 
 export const UI_LANGUAGES = [

@@ -30,7 +30,6 @@ export function ProfileDropdown({
   onLanguageChange,
 }: ProfileDropdownProps) {
   const router = useRouter()
-  const supabase = createClient()
   const { theme, setTheme } = useTheme()
   const { t } = useLanguage()
 
@@ -43,6 +42,7 @@ export function ProfileDropdown({
     : null
 
   const handleLogout = async () => {
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
