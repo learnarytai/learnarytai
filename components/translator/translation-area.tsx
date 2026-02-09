@@ -262,17 +262,17 @@ export function TranslationArea() {
           </div>
         </div>
 
-        {/* Center column - Swap button + Analyzing indicator */}
-        <div className="flex flex-col items-center">
-          {/* Analyzing indicator at language selector level */}
-          <div className="mb-3 flex h-8 items-center">
-            {isAnalyzing ? (
-              <div className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
-                <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span>{t('translator.analyzing')}</span>
-              </div>
-            ) : null}
-          </div>
+        {/* Center column - Swap button only (fixed width) */}
+        <div className="relative flex flex-col items-center">
+          {/* Analyzing indicator - absolute so it never shifts layout */}
+          {isAnalyzing && (
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
+              <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span>{t('translator.analyzing')}</span>
+            </div>
+          )}
+          {/* Spacer to match language selector row */}
+          <div className="mb-3 h-8" />
           {/* Swap button */}
           <div className="flex flex-1 items-start pt-8">
             <button
