@@ -89,7 +89,6 @@ export function useTranslation(
         // Phase 2: Start analysis in background
         if (data.translatedText) {
           analyzeInBackground(
-            requestId,
             debouncedText,
             data.translatedText,
             sourceLang,
@@ -112,7 +111,6 @@ export function useTranslation(
 
   const analyzeInBackground = useCallback(
     async (
-      requestId: number,
       sourceText: string,
       translated: string,
       srcLang: string,
@@ -125,6 +123,7 @@ export function useTranslation(
       setIsAnalyzing(true)
 
       try {
+        console.log('[Analysis] Starting fetch to /api/analyze')
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -138,22 +137,27 @@ export function useTranslation(
           signal: controller.signal,
         })
 
-        if (requestId !== lastRequestRef.current) return
+        console.log('[Analysis] Response status:', res.status)
 
         if (res.ok) {
           const data = await res.json()
+          console.log('[Analysis] Got words:', data.words?.length, data.words?.[0])
           if (data.words?.length > 0) {
             setParsedWords(data.words)
           }
+        } else {
+          const text = await res.text()
+          console.error('[Analysis] Error response:', res.status, text)
         }
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return
-        console.error('[Analysis] failed:', err)
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('[Analysis] Aborted')
+          return
+        }
+        console.error('[Analysis] Fetch failed:', err)
       } finally {
         clearTimeout(timeout)
-        if (requestId === lastRequestRef.current) {
-          setIsAnalyzing(false)
-        }
+        setIsAnalyzing(false)
       }
     },
     [uiLang]

@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { openrouter } from '@/lib/openrouter'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Allow longer execution on Vercel (default 10s is too short for AI calls)
+export const maxDuration = 60
+
 const VALID_POS = new Set([
   'noun', 'adjective', 'verb', 'adverb', 'pronoun', 'numeral',
   'preposition', 'conjunction', 'particle', 'interjection', 'participle', 'gerund',
