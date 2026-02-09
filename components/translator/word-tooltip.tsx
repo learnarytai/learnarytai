@@ -12,9 +12,11 @@ interface WordTooltipProps {
   word: ParsedWord
   position: { x: number; y: number }
   onAddToDictionary: (word: ParsedWord) => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }
 
-export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipProps) {
+export function WordTooltip({ word, position, onAddToDictionary, onMouseEnter, onMouseLeave }: WordTooltipProps) {
   const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech] || '#e5e5e5'
   const tooltipRef = useRef<HTMLDivElement>(null)
   const { t } = useLanguage()
@@ -40,6 +42,8 @@ export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipPr
         left: `${position.x}px`,
         top: `${position.y + 8}px`,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -48,10 +52,10 @@ export function WordTooltip({ word, position, onAddToDictionary }: WordTooltipPr
         </div>
         <Badge
           variant="secondary"
-          style={{ backgroundColor: color, color: '#333' }}
+          style={{ backgroundColor: `${color}40`, color: '#333', border: `1px solid ${color}` }}
           className="shrink-0 text-xs font-medium"
         >
-          {word.pos}
+          {t(`pos.${word.pos}`)}
         </Badge>
       </div>
 

@@ -41,6 +41,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.addToDictionary': 'Add to Dictionary',
     'translator.characters': 'characters',
     'translator.editText': 'Edit text',
+    'translator.langDetected': 'Language detected',
+    'translator.analyzing': 'Analyzing grammar...',
+
+    // Parts of speech
+    'pos.noun': 'noun',
+    'pos.adjective': 'adjective',
+    'pos.verb': 'verb',
+    'pos.adverb': 'adverb',
+    'pos.pronoun': 'pronoun',
+    'pos.numeral': 'numeral',
+    'pos.preposition': 'preposition',
+    'pos.conjunction': 'conjunction',
+    'pos.particle': 'particle',
+    'pos.interjection': 'interjection',
+    'pos.participle': 'participle',
+    'pos.gerund': 'gerund',
 
     // Dictionary
     'dictionary.title': 'Dictionary',
@@ -113,6 +129,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.addToDictionary': 'Додати до словника',
     'translator.characters': 'символів',
     'translator.editText': 'Редагувати текст',
+    'translator.langDetected': 'Мову визначено',
+    'translator.analyzing': 'Аналізуємо граматику...',
+
+    // Parts of speech
+    'pos.noun': 'іменник',
+    'pos.adjective': 'прикметник',
+    'pos.verb': 'дієслово',
+    'pos.adverb': 'прислівник',
+    'pos.pronoun': 'займенник',
+    'pos.numeral': 'числівник',
+    'pos.preposition': 'прийменник',
+    'pos.conjunction': 'сполучник',
+    'pos.particle': 'частка',
+    'pos.interjection': 'вигук',
+    'pos.participle': 'дієприкметник',
+    'pos.gerund': 'дієприслівник',
 
     // Dictionary
     'dictionary.title': 'Словник',
@@ -185,6 +217,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.addToDictionary': 'Добавить в словарь',
     'translator.characters': 'символов',
     'translator.editText': 'Редактировать текст',
+    'translator.langDetected': 'Язык определён',
+    'translator.analyzing': 'Анализируем грамматику...',
+
+    // Parts of speech
+    'pos.noun': 'существительное',
+    'pos.adjective': 'прилагательное',
+    'pos.verb': 'глагол',
+    'pos.adverb': 'наречие',
+    'pos.pronoun': 'местоимение',
+    'pos.numeral': 'числительное',
+    'pos.preposition': 'предлог',
+    'pos.conjunction': 'союз',
+    'pos.particle': 'частица',
+    'pos.interjection': 'междометие',
+    'pos.participle': 'причастие',
+    'pos.gerund': 'деепричастие',
 
     // Dictionary
     'dictionary.title': 'Словарь',
@@ -257,6 +305,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.addToDictionary': 'Añadir al diccionario',
     'translator.characters': 'caracteres',
     'translator.editText': 'Editar texto',
+    'translator.langDetected': 'Idioma detectado',
+    'translator.analyzing': 'Analizando gramática...',
+
+    // Parts of speech
+    'pos.noun': 'sustantivo',
+    'pos.adjective': 'adjetivo',
+    'pos.verb': 'verbo',
+    'pos.adverb': 'adverbio',
+    'pos.pronoun': 'pronombre',
+    'pos.numeral': 'numeral',
+    'pos.preposition': 'preposición',
+    'pos.conjunction': 'conjunción',
+    'pos.particle': 'partícula',
+    'pos.interjection': 'interjección',
+    'pos.participle': 'participio',
+    'pos.gerund': 'gerundio',
 
     // Dictionary
     'dictionary.title': 'Diccionario',
@@ -329,6 +393,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.addToDictionary': 'Ajouter au dictionnaire',
     'translator.characters': 'caractères',
     'translator.editText': 'Modifier le texte',
+    'translator.langDetected': 'Langue détectée',
+    'translator.analyzing': 'Analyse grammaticale...',
+
+    // Parts of speech
+    'pos.noun': 'nom',
+    'pos.adjective': 'adjectif',
+    'pos.verb': 'verbe',
+    'pos.adverb': 'adverbe',
+    'pos.pronoun': 'pronom',
+    'pos.numeral': 'numéral',
+    'pos.preposition': 'préposition',
+    'pos.conjunction': 'conjonction',
+    'pos.particle': 'particule',
+    'pos.interjection': 'interjection',
+    'pos.participle': 'participe',
+    'pos.gerund': 'gérondif',
 
     // Dictionary
     'dictionary.title': 'Dictionnaire',
@@ -401,6 +481,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.addToDictionary': 'Zum Wörterbuch hinzufügen',
     'translator.characters': 'Zeichen',
     'translator.editText': 'Text bearbeiten',
+    'translator.langDetected': 'Sprache erkannt',
+    'translator.analyzing': 'Grammatik wird analysiert...',
+
+    // Parts of speech
+    'pos.noun': 'Substantiv',
+    'pos.adjective': 'Adjektiv',
+    'pos.verb': 'Verb',
+    'pos.adverb': 'Adverb',
+    'pos.pronoun': 'Pronomen',
+    'pos.numeral': 'Numerale',
+    'pos.preposition': 'Präposition',
+    'pos.conjunction': 'Konjunktion',
+    'pos.particle': 'Partikel',
+    'pos.interjection': 'Interjektion',
+    'pos.participle': 'Partizip',
+    'pos.gerund': 'Gerundium',
 
     // Dictionary
     'dictionary.title': 'Wörterbuch',

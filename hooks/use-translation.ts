@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDebounce } from './use-debounce'
-import type { TranslationResult, ParsedWord } from '@/lib/types'
+import type { ParsedWord } from '@/lib/types'
 
 export function useTranslation(
   text: string,
@@ -12,12 +12,15 @@ export function useTranslation(
   const [translatedText, setTranslatedText] = useState('')
   const [parsedWords, setParsedWords] = useState<ParsedWord[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [detectedLang, setDetectedLang] = useState<string | null>(null)
 
   const debouncedText = useDebounce(text, 500)
   const lastRequestRef = useRef(0)
+  const analyzeControllerRef = useRef<AbortController | null>(null)
 
+  // Phase 1: Fast translation
   useEffect(() => {
     if (!debouncedText.trim()) {
       setTranslatedText('')
@@ -29,6 +32,12 @@ export function useTranslation(
 
     const requestId = ++lastRequestRef.current
     const controller = new AbortController()
+
+    // Abort any in-progress analysis
+    if (analyzeControllerRef.current) {
+      analyzeControllerRef.current.abort()
+      analyzeControllerRef.current = null
+    }
 
     async function translate() {
       setIsLoading(true)
@@ -46,7 +55,6 @@ export function useTranslation(
           signal: controller.signal,
         })
 
-        // Ignore stale responses
         if (requestId !== lastRequestRef.current) return
 
         if (!res.ok) {
@@ -54,19 +62,28 @@ export function useTranslation(
           throw new Error(data.error || 'Translation failed')
         }
 
-        const data: TranslationResult = await res.json()
+        const data = await res.json()
         setTranslatedText(data.translatedText)
-        setParsedWords(data.words || [])
         setDetectedLang(data.detectedLang || null)
+        setParsedWords([]) // Clear old analysis
+        setIsLoading(false)
+
+        // Phase 2: Start analysis in background
+        if (data.translatedText) {
+          analyzeInBackground(
+            requestId,
+            debouncedText,
+            data.translatedText,
+            sourceLang,
+            targetLang
+          )
+        }
       } catch (err) {
         if (requestId !== lastRequestRef.current) return
         if (err instanceof Error && err.name !== 'AbortError') {
           setError(err.message)
         }
-      } finally {
-        if (requestId === lastRequestRef.current) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
       }
     }
 
@@ -75,5 +92,51 @@ export function useTranslation(
     return () => controller.abort()
   }, [debouncedText, sourceLang, targetLang])
 
-  return { translatedText, parsedWords, isLoading, error, detectedLang }
+  // Phase 2: Background grammar analysis
+  const analyzeInBackground = useCallback(
+    async (
+      requestId: number,
+      sourceText: string,
+      translated: string,
+      srcLang: string,
+      tgtLang: string
+    ) => {
+      const controller = new AbortController()
+      analyzeControllerRef.current = controller
+      setIsAnalyzing(true)
+
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceText,
+            translatedText: translated,
+            sourceLang: srcLang,
+            targetLang: tgtLang,
+          }),
+          signal: controller.signal,
+        })
+
+        if (requestId !== lastRequestRef.current) return
+
+        if (res.ok) {
+          const data = await res.json()
+          if (data.words?.length > 0) {
+            setParsedWords(data.words)
+          }
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
+        console.error('[Analysis] failed:', err)
+      } finally {
+        if (requestId === lastRequestRef.current) {
+          setIsAnalyzing(false)
+        }
+      }
+    },
+    []
+  )
+
+  return { translatedText, parsedWords, isLoading, isAnalyzing, error, detectedLang }
 }

@@ -82,12 +82,10 @@ export function TextEditor({
                     data-word-id={word.id}
                     className="cursor-pointer rounded-sm px-[1px] transition-all duration-150"
                     style={{
-                      backgroundColor: isHovered
-                        ? '#FFFF00'
-                        : color
-                          ? `${color}30`
-                          : undefined,
-                      boxShadow: isHovered ? '0 2px 0 #FFFF00' : undefined,
+                      backgroundColor: isHovered && color
+                        ? `${color}40`
+                        : undefined,
+                      boxShadow: isHovered ? `0 2px 0 ${color || '#FFFF00'}` : undefined,
                     }}
                     onMouseEnter={(e) => {
                       e.stopPropagation()
@@ -146,12 +144,10 @@ export function TextEditor({
             data-pos={word.pos}
             className="cursor-pointer rounded-sm px-[1px] transition-all duration-150"
             style={{
-              backgroundColor: isHovered
-                ? '#FFFF00'
-                : color
-                  ? `${color}40`
-                  : undefined,
-              boxShadow: isHovered ? '0 2px 0 #FFFF00' : undefined,
+              backgroundColor: isHovered && color
+                ? `${color}40`
+                : undefined,
+              boxShadow: isHovered ? `0 2px 0 ${color || '#FFFF00'}` : undefined,
             }}
             onMouseEnter={(e) => onWordHover(word.id, e)}
             onMouseLeave={() => onWordHover(null)}

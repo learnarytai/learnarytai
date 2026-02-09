@@ -48,6 +48,8 @@ export function TranslationArea() {
     word: ParsedWord
     position: { x: number; y: number }
   } | null>(null)
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTooltipHoveredRef = useRef(false)
 
   // Track whether we already handled a particular detectedLang
   const lastHandledDetection = useRef<string | null>(null)
@@ -78,7 +80,7 @@ export function TranslationArea() {
     sessionStorage.setItem(SESSION_TGT_LANG, targetLang)
   }, [targetLang])
 
-  const { translatedText, parsedWords, isLoading, error, detectedLang } =
+  const { translatedText, parsedWords, isLoading, isAnalyzing, error, detectedLang } =
     useTranslation(sourceText, sourceLang, targetLang)
   const { addEntry } = useDictionary()
 
@@ -139,8 +141,14 @@ export function TranslationArea() {
 
   const handleWordHover = useCallback(
     (wordId: string | null, event?: React.MouseEvent) => {
-      setHoveredWordId(wordId)
+      // Clear any pending hide timeout
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current)
+        tooltipTimeoutRef.current = null
+      }
+
       if (wordId && event) {
+        setHoveredWordId(wordId)
         const word = parsedWords.find((w) => w.id === wordId)
         if (word) {
           const rect = (event.target as HTMLElement).getBoundingClientRect()
@@ -150,11 +158,31 @@ export function TranslationArea() {
           })
         }
       } else {
-        setTooltipData(null)
+        // Delay hiding to allow mouse to move to tooltip
+        tooltipTimeoutRef.current = setTimeout(() => {
+          if (!isTooltipHoveredRef.current) {
+            setHoveredWordId(null)
+            setTooltipData(null)
+          }
+        }, 200)
       }
     },
     [parsedWords]
   )
+
+  const handleTooltipMouseEnter = useCallback(() => {
+    isTooltipHoveredRef.current = true
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current)
+      tooltipTimeoutRef.current = null
+    }
+  }, [])
+
+  const handleTooltipMouseLeave = useCallback(() => {
+    isTooltipHoveredRef.current = false
+    setHoveredWordId(null)
+    setTooltipData(null)
+  }, [])
 
   const handleAddToDictionary = useCallback(
     async (word: ParsedWord) => {
@@ -196,11 +224,11 @@ export function TranslationArea() {
             {/* Language auto-detect notification */}
             {langNotification && (
               <span className="absolute right-0 animate-pulse text-xs text-primary">
-                {t(`lang.${langNotification}`)}
+                {t('translator.langDetected')}
               </span>
             )}
           </div>
-          <div className="a4-sheet relative flex-1 overflow-y-auto">
+          <div className="a4-sheet relative flex-1 overflow-hidden">
             <TextEditor
               mode={sourceMode}
               text={sourceText}
@@ -235,7 +263,7 @@ export function TranslationArea() {
           <div className="mb-3 flex justify-center">
             <LanguageSelector value={targetLang} onChange={setTargetLang} />
           </div>
-          <div className="a4-sheet flex-1 overflow-y-auto">
+          <div className="a4-sheet relative flex-1 overflow-y-auto">
             <TextEditor
               mode="output"
               text={translatedText}
@@ -244,6 +272,12 @@ export function TranslationArea() {
               isLoading={isLoading}
               onWordHover={handleWordHover}
             />
+            {isAnalyzing && (
+              <div className="pointer-events-none absolute bottom-2 right-3 flex items-center gap-1 text-xs text-muted-foreground/50">
+                <div className="h-3 w-3 animate-spin rounded-full border border-primary/30 border-t-primary/70" />
+                {t('translator.analyzing')}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -253,6 +287,8 @@ export function TranslationArea() {
           word={tooltipData.word}
           position={tooltipData.position}
           onAddToDictionary={handleAddToDictionary}
+          onMouseEnter={handleTooltipMouseEnter}
+          onMouseLeave={handleTooltipMouseLeave}
         />
       )}
     </div>
