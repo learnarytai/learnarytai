@@ -9,7 +9,7 @@ const VALID_POS = new Set([
 
 const UI_LANG_NAMES: Record<string, string> = {
   en: 'English', uk: 'Ukrainian', ru: 'Russian',
-  es: 'Spanish', fr: 'French', de: 'German',
+  it: 'Italian', es: 'Spanish', fr: 'French',
 }
 
 export async function POST(request: NextRequest) {
@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
 
     const uiLangName = UI_LANG_NAMES[uiLang] || 'English'
 
+    const targetLangName = UI_LANG_NAMES[targetLang] || targetLang
     const systemPrompt = `Analyze each word in the translated text. For contractions (e.g. I'm, don't, it's), split into separate words.
 
 For each word return:
@@ -35,11 +36,9 @@ For each word return:
 - original: source word(s)
 - translation: translated word
 - pos: ONE of: noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund
-- grammar: grammatical info (gender, number, case, tense, person)
-- definition: short definition of this word
-- example: one example sentence using this word
-
-ALL text in grammar, definition, example MUST be in ${uiLangName}.
+- grammar: grammatical info (gender, number, case, tense, person) in ${uiLangName}
+- definition: short definition of this word in ${uiLangName}
+- example: one example sentence using this word in ${targetLangName}
 
 Return ONLY JSON: {"words":[...]}`
 

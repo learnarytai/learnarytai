@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from '@/hooks/use-translation'
+import { useDebounce } from '@/hooks/use-debounce'
 import { useDictionary } from '@/hooks/use-dictionary'
 import { useGeoLanguage } from '@/hooks/use-geo-language'
 import { useLanguage } from '@/components/providers/language-provider'
@@ -43,8 +44,8 @@ export function TranslationArea() {
   const [langInitialized, setLangInitialized] = useState(false)
   const [hoveredWordId, setHoveredWordId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(true)
-  const [tooltipData, setTooltipData] = useState<{
-    word: ParsedWord
+  const [tooltipAnchor, setTooltipAnchor] = useState<{
+    wordId: string
     position: { x: number; y: number }
   } | null>(null)
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -52,6 +53,9 @@ export function TranslationArea() {
 
   // Track whether we already handled a particular detectedLang
   const lastHandledDetection = useRef<string | null>(null)
+
+  // Debounce sourceText to know when user stopped typing
+  const debouncedSourceText = useDebounce(sourceText, 600)
 
   // Geo language init (only if no saved preference)
   useEffect(() => {
@@ -88,7 +92,6 @@ export function TranslationArea() {
   useEffect(() => {
     if (translatedText && translatedText !== prevTranslatedRef.current) {
       prevTranslatedRef.current = translatedText
-      // Small delay to let server update characters_used
       const timer = setTimeout(() => refreshProfile(), 1000)
       return () => clearTimeout(timer)
     }
@@ -104,7 +107,6 @@ export function TranslationArea() {
       lastHandledDetection.current = detectedLang
 
       if (detectedLang === targetLang) {
-        // User types in target language - swap
         setSourceLang(targetLang)
         setTargetLang(sourceLang)
       } else {
@@ -120,16 +122,17 @@ export function TranslationArea() {
     lastHandledDetection.current = null
   }, [])
 
-  const hasTranslation = parsedWords.length > 0 && !isLoading
   const hasPlainTranslation = translatedText.length > 0 && !isLoading
-  const sourceMode = (hasTranslation || hasPlainTranslation) && !isEditing ? 'source' : 'input'
+  // Only switch to source mode when user STOPPED typing (debounced text matches current)
+  const userStoppedTyping = sourceText === debouncedSourceText
+  const sourceMode = hasPlainTranslation && !isEditing && userStoppedTyping ? 'source' : 'input'
 
-  // Switch to source mode when translation completes
+  // Switch to source mode when translation completes AND user stopped typing
   useEffect(() => {
-    if (hasPlainTranslation) {
+    if (hasPlainTranslation && userStoppedTyping) {
       setIsEditing(false)
     }
-  }, [hasPlainTranslation])
+  }, [hasPlainTranslation, userStoppedTyping])
 
   const handleSwapLanguages = useCallback(() => {
     const newSrc = targetLang
@@ -145,6 +148,12 @@ export function TranslationArea() {
     setIsEditing(true)
   }, [])
 
+  // Derive current tooltip word from parsedWords (always fresh)
+  const tooltipWord = tooltipAnchor
+    ? parsedWords.find((w) => w.id === tooltipAnchor.wordId) || null
+    : null
+  const hasAnalysisData = tooltipWord ? !!(tooltipWord.definition || tooltipWord.grammar) : false
+
   const handleWordHover = useCallback(
     (wordId: string | null, event?: React.MouseEvent) => {
       // Clear any pending hide timeout
@@ -155,25 +164,22 @@ export function TranslationArea() {
 
       if (wordId && event) {
         setHoveredWordId(wordId)
-        const word = parsedWords.find((w) => w.id === wordId)
-        if (word) {
-          const rect = (event.target as HTMLElement).getBoundingClientRect()
-          setTooltipData({
-            word,
-            position: { x: rect.left, y: rect.bottom },
-          })
-        }
+        const rect = (event.target as HTMLElement).getBoundingClientRect()
+        setTooltipAnchor({
+          wordId,
+          position: { x: rect.left, y: rect.bottom },
+        })
       } else {
         // Delay hiding to allow mouse to move to tooltip
         tooltipTimeoutRef.current = setTimeout(() => {
           if (!isTooltipHoveredRef.current) {
             setHoveredWordId(null)
-            setTooltipData(null)
+            setTooltipAnchor(null)
           }
         }, 200)
       }
     },
-    [parsedWords]
+    []
   )
 
   const handleTooltipMouseEnter = useCallback(() => {
@@ -187,7 +193,7 @@ export function TranslationArea() {
   const handleTooltipMouseLeave = useCallback(() => {
     isTooltipHoveredRef.current = false
     setHoveredWordId(null)
-    setTooltipData(null)
+    setTooltipAnchor(null)
   }, [])
 
   const handleAddToDictionary = useCallback(
@@ -206,7 +212,7 @@ export function TranslationArea() {
       } else {
         toast.error(t('dictionary.failedAdd'))
       }
-      setTooltipData(null)
+      setTooltipAnchor(null)
     },
     [addEntry, sourceLang, targetLang, t]
   )
@@ -296,10 +302,10 @@ export function TranslationArea() {
         </div>
       </div>
 
-      {tooltipData && (
+      {tooltipWord && tooltipAnchor && hasAnalysisData && (
         <WordTooltip
-          word={tooltipData.word}
-          position={tooltipData.position}
+          word={tooltipWord}
+          position={tooltipAnchor.position}
           onAddToDictionary={handleAddToDictionary}
           onMouseEnter={handleTooltipMouseEnter}
           onMouseLeave={handleTooltipMouseLeave}
