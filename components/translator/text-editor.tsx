@@ -100,11 +100,8 @@ export function TextEditor({
     })
   }
 
-  // Source mode
+  // Source mode — always show the full source text (clickable to return to edit)
   if (mode === 'source') {
-    // Check if we have real analysis (originals populated) or just temp words
-    const hasRealOriginals = parsedWords.length > 0 && parsedWords.some((w) => w.original)
-
     return (
       <div
         className="h-full cursor-text"
@@ -115,9 +112,7 @@ export function TextEditor({
           className="min-h-[200px]"
           style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
         >
-          {hasRealOriginals
-            ? renderWordSpans((w) => w.original, 'src')
-            : <span>{text}</span>}
+          <span>{text}</span>
         </div>
       </div>
     )

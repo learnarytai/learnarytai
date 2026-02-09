@@ -11,6 +11,7 @@ export function useTranslation(
   uiLang: string = 'en'
 ) {
   const [translatedText, setTranslatedText] = useState('')
+  const [translatedFrom, setTranslatedFrom] = useState('')
   const [parsedWords, setParsedWords] = useState<ParsedWord[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -25,6 +26,7 @@ export function useTranslation(
   useEffect(() => {
     if (!debouncedText.trim()) {
       setTranslatedText('')
+      setTranslatedFrom('')
       setParsedWords([])
       setError(null)
       setDetectedLang(null)
@@ -64,15 +66,17 @@ export function useTranslation(
 
         const data = await res.json()
         setTranslatedText(data.translatedText)
+        setTranslatedFrom(debouncedText)
         setDetectedLang(data.detectedLang || null)
 
         // Create temp word objects immediately so hover works
         const translatedWords = (data.translatedText as string).split(/\s+/).filter(Boolean)
         const sourceWords = debouncedText.split(/\s+/).filter(Boolean)
-        const tempWords: ParsedWord[] = translatedWords.map((w: string, i: number) => ({
+        const maxLen = Math.max(sourceWords.length, translatedWords.length)
+        const tempWords: ParsedWord[] = Array.from({ length: maxLen }, (_, i) => ({
           id: `w${i + 1}`,
           original: sourceWords[i] || '',
-          translation: w,
+          translation: translatedWords[i] || '',
           pos: 'noun' as const,
           grammar: '',
           definition: '',
@@ -155,5 +159,5 @@ export function useTranslation(
     [uiLang]
   )
 
-  return { translatedText, parsedWords, isLoading, isAnalyzing, error, detectedLang }
+  return { translatedText, translatedFrom, parsedWords, isLoading, isAnalyzing, error, detectedLang }
 }

@@ -15,8 +15,10 @@ const UI_LANG_NAMES: Record<string, string> = {
 // Models to try in order (non-thinking models work best for JSON)
 const MODELS = [
   process.env.OPENROUTER_MODEL,
-  'google/gemini-2.5-pro-exp-03-25:free',
-  'meta-llama/llama-4-maverick:free',
+  'google/gemini-2.0-flash-exp:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'mistralai/mistral-small-3.1-24b-instruct:free',
+  'google/gemma-3-27b:free',
 ].filter(Boolean) as string[]
 
 function extractJSON(raw: string): string {

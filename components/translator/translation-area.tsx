@@ -83,7 +83,7 @@ export function TranslationArea() {
     sessionStorage.setItem(SESSION_TGT_LANG, targetLang)
   }, [targetLang])
 
-  const { translatedText, parsedWords, isLoading, isAnalyzing, error, detectedLang } =
+  const { translatedText, translatedFrom, parsedWords, isLoading, isAnalyzing, error, detectedLang } =
     useTranslation(sourceText, sourceLang, targetLang, locale)
   const { addEntry } = useDictionary()
 
@@ -123,16 +123,17 @@ export function TranslationArea() {
   }, [])
 
   const hasPlainTranslation = translatedText.length > 0 && !isLoading
-  // Only switch to source mode when user STOPPED typing (debounced text matches current)
+  // Only switch to source mode when user STOPPED typing AND translation is for current text
   const userStoppedTyping = sourceText === debouncedSourceText
-  const sourceMode = hasPlainTranslation && !isEditing && userStoppedTyping ? 'source' : 'input'
+  const translationIsFresh = translatedFrom === sourceText
+  const sourceMode = hasPlainTranslation && !isEditing && userStoppedTyping && translationIsFresh ? 'source' : 'input'
 
-  // Switch to source mode when translation completes AND user stopped typing
+  // Switch to source mode when translation completes for current text AND user stopped typing
   useEffect(() => {
-    if (hasPlainTranslation && userStoppedTyping) {
+    if (hasPlainTranslation && userStoppedTyping && translationIsFresh) {
       setIsEditing(false)
     }
-  }, [hasPlainTranslation, userStoppedTyping])
+  }, [hasPlainTranslation, userStoppedTyping, translationIsFresh])
 
   const handleSwapLanguages = useCallback(() => {
     const newSrc = targetLang
