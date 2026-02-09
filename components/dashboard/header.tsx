@@ -10,9 +10,10 @@ import { ProfileDropdown } from './profile-dropdown'
 interface HeaderProps {
   profile: Profile | null
   onLanguageChange?: (lang: string) => void
+  onThemeChange?: (theme: string) => void
 }
 
-export function Header({ profile, onLanguageChange }: HeaderProps) {
+export function Header({ profile, onLanguageChange, onThemeChange }: HeaderProps) {
   const pathname = usePathname()
   const { t } = useLanguage()
 
@@ -49,7 +50,7 @@ export function Header({ profile, onLanguageChange }: HeaderProps) {
         </div>
 
         <div className="ml-auto">
-          <ProfileDropdown profile={profile} onLanguageChange={onLanguageChange} />
+          <ProfileDropdown profile={profile} onLanguageChange={onLanguageChange} onThemeChange={onThemeChange} />
         </div>
       </div>
     </header>

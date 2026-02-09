@@ -23,11 +23,13 @@ import { Settings, Globe, Sun, Moon, Monitor, LogOut, User } from 'lucide-react'
 interface ProfileDropdownProps {
   profile: Profile | null
   onLanguageChange?: (lang: string) => void
+  onThemeChange?: (theme: string) => void
 }
 
 export function ProfileDropdown({
   profile,
   onLanguageChange,
+  onThemeChange,
 }: ProfileDropdownProps) {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
@@ -56,6 +58,16 @@ export function ProfileDropdown({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ interface_language: lang }),
     }).catch((err) => console.error('Failed to update language:', err))
+  }
+
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme)
+    onThemeChange?.(newTheme)
+    fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: newTheme }),
+    }).catch((err) => console.error('Failed to update theme:', err))
   }
 
   return (
@@ -112,17 +124,17 @@ export function ProfileDropdown({
             {t('profile.theme')}
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="rounded-xl">
-            <DropdownMenuItem onClick={() => setTheme('light')} className="rounded-lg">
+            <DropdownMenuItem onClick={() => handleThemeChange('light')} className="rounded-lg">
               <Sun className="mr-2 h-4 w-4" />
               {t('profile.light')}
               {theme === 'light' && <span className="ml-auto text-xs text-primary">&#10003;</span>}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('dark')} className="rounded-lg">
+            <DropdownMenuItem onClick={() => handleThemeChange('dark')} className="rounded-lg">
               <Moon className="mr-2 h-4 w-4" />
               {t('profile.dark')}
               {theme === 'dark' && <span className="ml-auto text-xs text-primary">&#10003;</span>}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('system')} className="rounded-lg">
+            <DropdownMenuItem onClick={() => handleThemeChange('system')} className="rounded-lg">
               <Monitor className="mr-2 h-4 w-4" />
               {t('profile.system')}
               {theme === 'system' && <span className="ml-auto text-xs text-primary">&#10003;</span>}

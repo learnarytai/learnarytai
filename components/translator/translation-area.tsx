@@ -20,7 +20,7 @@ const SESSION_TGT_LANG = 'translator-tgt-lang'
 export function TranslationArea() {
   const geoLang = useGeoLanguage()
   const { t, locale } = useLanguage()
-  const { profile } = useProfile()
+  const { profile, refreshProfile } = useProfile()
 
   const [sourceText, setSourceText] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -82,6 +82,17 @@ export function TranslationArea() {
   const { translatedText, parsedWords, isLoading, isAnalyzing, error, detectedLang } =
     useTranslation(sourceText, sourceLang, targetLang, locale)
   const { addEntry } = useDictionary()
+
+  // Refresh profile after translation completes to update characters_used
+  const prevTranslatedRef = useRef('')
+  useEffect(() => {
+    if (translatedText && translatedText !== prevTranslatedRef.current) {
+      prevTranslatedRef.current = translatedText
+      // Small delay to let server update characters_used
+      const timer = setTimeout(() => refreshProfile(), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [translatedText, refreshProfile])
 
   // Auto-detect language: if API detected a different language, update selectors
   useEffect(() => {
@@ -200,14 +211,22 @@ export function TranslationArea() {
     [addEntry, sourceLang, targetLang, t]
   )
 
+  const charsUsed = profile?.characters_used ?? 0
   const charLimit = profile?.characters_limit ?? 1000
   const tier = profile?.subscription_tier ?? 'free'
+  const limitReached = tier === 'free' && charsUsed >= charLimit
 
   return (
     <div className="flex h-[calc(100vh-5rem)] flex-col">
       {error && (
         <div className="mx-auto mb-3 max-w-md rounded-xl bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {limitReached && (
+        <div className="mx-auto mb-3 max-w-md rounded-xl bg-yellow-500/10 px-4 py-2 text-center text-sm text-yellow-700 dark:text-yellow-400">
+          {t('translator.limitReached')}
         </div>
       )}
 
@@ -228,23 +247,35 @@ export function TranslationArea() {
               onWordHover={handleWordHover}
               onEditRequest={handleEditRequest}
             />
-            {/* Character counter - bottom right */}
+            {/* Total character usage counter */}
             <div className="pointer-events-none absolute bottom-2 right-3 select-none text-xs text-muted-foreground/50">
               {tier === 'pro'
-                ? sourceText.length.toLocaleString()
-                : `${sourceText.length.toLocaleString()} / ${charLimit.toLocaleString()}`}
+                ? charsUsed.toLocaleString()
+                : `${t('translator.used')}: ${charsUsed.toLocaleString()} / ${charLimit.toLocaleString()}`}
             </div>
           </div>
         </div>
 
-        {/* Swap button */}
-        <div className="flex items-center">
-          <button
-            onClick={handleSwapLanguages}
-            className="rounded-full border bg-background p-2 shadow-sm transition-colors hover:bg-muted"
-          >
-            <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+        {/* Center column - Swap button + Analyzing indicator */}
+        <div className="flex flex-col items-center">
+          {/* Analyzing indicator at language selector level */}
+          <div className="mb-3 flex h-8 items-center">
+            {isAnalyzing ? (
+              <div className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <span>{t('translator.analyzing')}</span>
+              </div>
+            ) : null}
+          </div>
+          {/* Swap button */}
+          <div className="flex flex-1 items-start pt-8">
+            <button
+              onClick={handleSwapLanguages}
+              className="rounded-full border bg-background p-2 shadow-sm transition-colors hover:bg-muted"
+            >
+              <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         {/* Right panel - Translation */}
@@ -259,7 +290,6 @@ export function TranslationArea() {
               parsedWords={parsedWords}
               hoveredWordId={hoveredWordId}
               isLoading={isLoading}
-              isAnalyzing={isAnalyzing}
               onWordHover={handleWordHover}
             />
           </div>

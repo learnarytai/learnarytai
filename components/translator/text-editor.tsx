@@ -11,7 +11,6 @@ interface TextEditorProps {
   parsedWords?: ParsedWord[]
   hoveredWordId: string | null
   isLoading?: boolean
-  isAnalyzing?: boolean
   placeholder?: string
   onChange?: (text: string) => void
   onWordHover: (wordId: string | null, event?: React.MouseEvent) => void
@@ -24,7 +23,6 @@ export function TextEditor({
   parsedWords = [],
   hoveredWordId,
   isLoading,
-  isAnalyzing,
   placeholder,
   onChange,
   onWordHover,
@@ -46,7 +44,6 @@ export function TextEditor({
     onWordHover(null)
   }, [onWordHover])
 
-  // Input mode - editable textarea
   if (mode === 'input') {
     return (
       <textarea
@@ -60,31 +57,31 @@ export function TextEditor({
     )
   }
 
-  // Render word spans (used by both source and output modes)
-  const renderWords = (getWordText: (w: ParsedWord) => string, keyPrefix: string) => {
-    if (parsedWords.length === 0) {
-      // No analysis yet — show plain text as non-interactive spans
-      return <span>{text}</span>
-    }
-
+  // Render interactive word spans
+  const renderWordSpans = (getWordText: (w: ParsedWord) => string, keyPrefix: string) => {
     return parsedWords.map((word, i) => {
+      const wordText = getWordText(word)
+      if (!wordText) return null
+
       const isHovered = hoveredWordId === word.id
       const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech]
+      const hasAnalysis = !!word.definition || !!word.grammar
 
       return (
         <span key={`${keyPrefix}-${word.id}`}>
           <span
             data-word-id={word.id}
-            className="cursor-pointer rounded px-[1px] transition-colors duration-100"
+            className="cursor-pointer rounded px-[1px]"
             style={{
               backgroundColor: isHovered
                 ? color
                   ? `${color}50`
-                  : 'rgba(255, 255, 0, 0.3)'
+                  : 'rgba(255, 200, 0, 0.3)'
                 : undefined,
               borderBottom: isHovered
                 ? `2px solid ${color || '#FFCC00'}`
                 : '2px solid transparent',
+              transition: 'background-color 0.1s, border-color 0.1s',
             }}
             onMouseEnter={(e) => {
               e.stopPropagation()
@@ -95,7 +92,7 @@ export function TextEditor({
               onWordHover(null)
             }}
           >
-            {getWordText(word)}
+            {wordText}
           </span>
           {i < parsedWords.length - 1 ? ' ' : ''}
         </span>
@@ -103,8 +100,11 @@ export function TextEditor({
     })
   }
 
-  // Source mode - highlighted source words, click to edit
+  // Source mode
   if (mode === 'source') {
+    // Check if we have real analysis (originals populated) or just temp words
+    const hasRealOriginals = parsedWords.length > 0 && parsedWords.some((w) => w.original)
+
     return (
       <div
         className="h-full cursor-text"
@@ -115,7 +115,9 @@ export function TextEditor({
           className="min-h-[200px]"
           style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
         >
-          {renderWords((w) => w.original, 'src')}
+          {hasRealOriginals
+            ? renderWordSpans((w) => w.original, 'src')
+            : <span>{text}</span>}
         </div>
       </div>
     )
@@ -151,14 +153,10 @@ export function TextEditor({
         className="min-h-[200px]"
         style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
       >
-        {renderWords((w) => w.translation, 'tgt')}
+        {parsedWords.length > 0
+          ? renderWordSpans((w) => w.translation, 'tgt')
+          : <span>{text}</span>}
       </div>
-      {isAnalyzing && (
-        <div className="mt-4 flex items-center justify-center gap-2 text-muted-foreground">
-          <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary/40 border-t-primary" />
-          <span className="text-sm">{t('translator.analyzing')}</span>
-        </div>
-      )}
     </div>
   )
 }

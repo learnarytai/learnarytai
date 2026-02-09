@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Header } from '@/components/dashboard/header'
 import { LanguageProvider } from '@/components/providers/language-provider'
 import { ProfileProvider } from '@/components/providers/profile-provider'
+import { useTheme } from '@/components/providers/theme-provider'
 import type { Profile } from '@/lib/types'
 import type { Locale } from '@/lib/i18n'
 
@@ -18,6 +19,7 @@ export default function DashboardLayout({
   const [profile, setProfile] = useState<Profile | null>(null)
   const [locale, setLocale] = useState<Locale>('en')
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+  const { setTheme } = useTheme()
 
   function getSupabase() {
     if (!supabaseRef.current) {
@@ -67,6 +69,9 @@ export default function DashboardLayout({
         if (data.interface_language) {
           setLocale(data.interface_language as Locale)
         }
+        if (data.theme) {
+          setTheme(data.theme)
+        }
         return
       }
     } catch {
@@ -86,7 +91,7 @@ export default function DashboardLayout({
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-  }, [])
+  }, [setTheme])
 
   useEffect(() => {
     loadProfile()
@@ -102,11 +107,24 @@ export default function DashboardLayout({
     [profile]
   )
 
+  const handleThemeChange = useCallback(
+    (theme: string) => {
+      if (profile) {
+        setProfile({ ...profile, theme: theme as Profile['theme'] })
+      }
+    },
+    [profile]
+  )
+
   return (
     <LanguageProvider locale={locale} onLocaleChange={(l) => handleLanguageChange(l)}>
       <ProfileProvider profile={profile} onRefresh={loadProfile}>
         <div className="h-screen overflow-hidden">
-          <Header profile={profile} onLanguageChange={handleLanguageChange} />
+          <Header
+            profile={profile}
+            onLanguageChange={handleLanguageChange}
+            onThemeChange={handleThemeChange}
+          />
           <main className="mx-auto max-w-7xl px-4 py-4">{children}</main>
         </div>
       </ProfileProvider>

@@ -34,7 +34,6 @@ export function useTranslation(
     const requestId = ++lastRequestRef.current
     const controller = new AbortController()
 
-    // Abort any in-progress analysis
     if (analyzeControllerRef.current) {
       analyzeControllerRef.current.abort()
       analyzeControllerRef.current = null
@@ -66,7 +65,21 @@ export function useTranslation(
         const data = await res.json()
         setTranslatedText(data.translatedText)
         setDetectedLang(data.detectedLang || null)
-        setParsedWords([])
+
+        // Create temp word objects immediately so hover works
+        const translatedWords = (data.translatedText as string).split(/\s+/).filter(Boolean)
+        const sourceWords = debouncedText.split(/\s+/).filter(Boolean)
+        const tempWords: ParsedWord[] = translatedWords.map((w: string, i: number) => ({
+          id: `w${i + 1}`,
+          original: sourceWords[i] || '',
+          translation: w,
+          pos: 'noun' as const,
+          grammar: '',
+          definition: '',
+          example: '',
+          explanation: '',
+        }))
+        setParsedWords(tempWords)
         setIsLoading(false)
 
         // Phase 2: Start analysis in background
@@ -93,7 +106,6 @@ export function useTranslation(
     return () => controller.abort()
   }, [debouncedText, sourceLang, targetLang])
 
-  // Phase 2: Background grammar analysis
   const analyzeInBackground = useCallback(
     async (
       requestId: number,
@@ -105,8 +117,7 @@ export function useTranslation(
       const controller = new AbortController()
       analyzeControllerRef.current = controller
 
-      // 15s timeout for analysis
-      const timeout = setTimeout(() => controller.abort(), 15000)
+      const timeout = setTimeout(() => controller.abort(), 30000)
       setIsAnalyzing(true)
 
       try {

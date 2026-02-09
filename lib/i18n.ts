@@ -1,4 +1,4 @@
-export type Locale = 'uk' | 'en' | 'ru' | 'es' | 'fr' | 'de'
+export type Locale = 'uk' | 'en' | 'ru' | 'es' | 'fr' | 'it'
 
 const translations: Record<Locale, Record<string, string>> = {
   en: {
@@ -43,6 +43,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.editText': 'Edit text',
     'translator.langDetected': 'Language detected',
     'translator.analyzing': 'Analyzing grammar...',
+    'translator.used': 'Used',
+    'translator.limitReached': 'Character limit reached. Upgrade to Pro!',
 
     // Parts of speech
     'pos.noun': 'noun',
@@ -88,10 +90,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'lang.uk': 'Ukrainian',
     'lang.en': 'English',
     'lang.ru': 'Russian',
-    'lang.es': 'Spanish',
     'lang.it': 'Italian',
+    'lang.es': 'Spanish',
     'lang.fr': 'French',
-    'lang.de': 'German',
   },
 
   uk: {
@@ -136,6 +137,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.editText': 'Редагувати текст',
     'translator.langDetected': 'Мову визначено',
     'translator.analyzing': 'Аналізуємо граматику...',
+    'translator.used': 'Використано',
+    'translator.limitReached': 'Ліміт символів вичерпано. Перейдіть на Pro!',
 
     // Parts of speech
     'pos.noun': 'іменник',
@@ -181,10 +184,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'lang.uk': 'Українська',
     'lang.en': 'Англійська',
     'lang.ru': 'Російська',
-    'lang.es': 'Іспанська',
     'lang.it': 'Італійська',
+    'lang.es': 'Іспанська',
     'lang.fr': 'Французька',
-    'lang.de': 'Німецька',
   },
 
   ru: {
@@ -229,6 +231,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'translator.editText': 'Редактировать текст',
     'translator.langDetected': 'Язык определён',
     'translator.analyzing': 'Анализируем грамматику...',
+    'translator.used': 'Использовано',
+    'translator.limitReached': 'Лимит символов исчерпан. Перейдите на Pro!',
 
     // Parts of speech
     'pos.noun': 'существительное',
@@ -274,30 +278,123 @@ const translations: Record<Locale, Record<string, string>> = {
     'lang.uk': 'Украинский',
     'lang.en': 'Английский',
     'lang.ru': 'Русский',
-    'lang.es': 'Испанский',
     'lang.it': 'Итальянский',
+    'lang.es': 'Испанский',
     'lang.fr': 'Французский',
-    'lang.de': 'Немецкий',
+  },
+
+  it: {
+    // Auth
+    'auth.signIn': 'Accedi',
+    'auth.signUp': 'Crea account',
+    'auth.continueWithGoogle': 'Continua con Google',
+    'auth.or': 'O',
+    'auth.email': 'E-mail',
+    'auth.password': 'Password',
+    'auth.emailPlaceholder': 'tu@esempio.com',
+    'auth.passwordPlaceholder': 'La tua password',
+    'auth.minChars': 'Min. 6 caratteri',
+    'auth.signingIn': 'Accesso in corso...',
+    'auth.creatingAccount': 'Creazione account...',
+    'auth.noAccount': 'Non hai un account?',
+    'auth.hasAccount': 'Hai gi\u00E0 un account?',
+    'auth.checkEmail': 'Controlla la tua email per confermare l\'account',
+    'auth.signInFailed': 'Accesso non riuscito. Riprova.',
+    'auth.signUpFailed': 'Creazione account non riuscita. Riprova.',
+
+    // Nav
+    'nav.translator': 'Traduttore',
+    'nav.dictionary': 'Dizionario',
+
+    // Profile
+    'profile.user': 'Utente',
+    'profile.settings': 'Impostazioni',
+    'profile.language': 'Lingua',
+    'profile.theme': 'Tema',
+    'profile.light': 'Chiaro',
+    'profile.dark': 'Scuro',
+    'profile.system': 'Sistema',
+    'profile.logout': 'Esci',
+
+    // Translator
+    'translator.inputPlaceholder': 'Scrivi o incolla il testo qui...',
+    'translator.outputPlaceholder': 'La traduzione apparir\u00E0 qui...',
+    'translator.translating': 'Traduzione in corso...',
+    'translator.addToDictionary': 'Aggiungi al dizionario',
+    'translator.characters': 'caratteri',
+    'translator.editText': 'Modifica testo',
+    'translator.langDetected': 'Lingua rilevata',
+    'translator.analyzing': 'Analisi grammaticale...',
+    'translator.used': 'Usati',
+    'translator.limitReached': 'Limite caratteri raggiunto. Passa a Pro!',
+
+    // Parts of speech
+    'pos.noun': 'sostantivo',
+    'pos.adjective': 'aggettivo',
+    'pos.verb': 'verbo',
+    'pos.adverb': 'avverbio',
+    'pos.pronoun': 'pronome',
+    'pos.numeral': 'numerale',
+    'pos.preposition': 'preposizione',
+    'pos.conjunction': 'congiunzione',
+    'pos.particle': 'particella',
+    'pos.interjection': 'interiezione',
+    'pos.participle': 'participio',
+    'pos.gerund': 'gerundio',
+
+    // Tooltip
+    'tooltip.pos': 'parte del discorso',
+    'tooltip.definition': 'definizione',
+    'tooltip.example': 'esempio',
+
+    // Dictionary
+    'dictionary.title': 'Dizionario',
+    'dictionary.empty': 'Il tuo dizionario \u00E8 vuoto',
+    'dictionary.search': 'Cerca parole...',
+    'dictionary.added': 'aggiunto al dizionario',
+    'dictionary.deleted': 'Parola eliminata',
+    'dictionary.failedAdd': 'Impossibile aggiungere la parola',
+
+    // Settings
+    'settings.title': 'Impostazioni',
+    'settings.profile': 'Profilo',
+    'settings.fullName': 'Nome completo',
+    'settings.saveChanges': 'Salva modifiche',
+    'settings.saving': 'Salvataggio...',
+    'settings.profileUpdated': 'Profilo aggiornato',
+    'settings.updateFailed': 'Aggiornamento profilo non riuscito',
+    'settings.subscription': 'Abbonamento',
+    'settings.freePlan': 'Piano gratuito',
+    'settings.proPlan': 'Piano Pro',
+    'settings.upgradeToPro': 'Passa a Pro',
+
+    // Language names
+    'lang.uk': 'Ucraino',
+    'lang.en': 'Inglese',
+    'lang.ru': 'Russo',
+    'lang.it': 'Italiano',
+    'lang.es': 'Spagnolo',
+    'lang.fr': 'Francese',
   },
 
   es: {
     // Auth
-    'auth.signIn': 'Iniciar sesión',
+    'auth.signIn': 'Iniciar sesi\u00F3n',
     'auth.signUp': 'Crear cuenta',
     'auth.continueWithGoogle': 'Continuar con Google',
     'auth.or': 'O',
-    'auth.email': 'Correo electrónico',
-    'auth.password': 'Contraseña',
+    'auth.email': 'Correo electr\u00F3nico',
+    'auth.password': 'Contrase\u00F1a',
     'auth.emailPlaceholder': 'tu@ejemplo.com',
-    'auth.passwordPlaceholder': 'Tu contraseña',
-    'auth.minChars': 'Mín. 6 caracteres',
-    'auth.signingIn': 'Iniciando sesión...',
+    'auth.passwordPlaceholder': 'Tu contrase\u00F1a',
+    'auth.minChars': 'M\u00EDn. 6 caracteres',
+    'auth.signingIn': 'Iniciando sesi\u00F3n...',
     'auth.creatingAccount': 'Creando cuenta...',
-    'auth.noAccount': '¿No tienes cuenta?',
-    'auth.hasAccount': '¿Ya tienes cuenta?',
-    'auth.checkEmail': 'Revisa tu correo electrónico para confirmar tu cuenta',
-    'auth.signInFailed': 'Error al iniciar sesión. Inténtalo de nuevo.',
-    'auth.signUpFailed': 'Error al crear la cuenta. Inténtalo de nuevo.',
+    'auth.noAccount': '\u00BFNo tienes cuenta?',
+    'auth.hasAccount': '\u00BFYa tienes cuenta?',
+    'auth.checkEmail': 'Revisa tu correo electr\u00F3nico para confirmar tu cuenta',
+    'auth.signInFailed': 'Error al iniciar sesi\u00F3n. Int\u00E9ntalo de nuevo.',
+    'auth.signUpFailed': 'Error al crear la cuenta. Int\u00E9ntalo de nuevo.',
 
     // Nav
     'nav.translator': 'Traductor',
@@ -305,23 +402,25 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // Profile
     'profile.user': 'Usuario',
-    'profile.settings': 'Configuración',
+    'profile.settings': 'Configuraci\u00F3n',
     'profile.language': 'Idioma',
     'profile.theme': 'Tema',
     'profile.light': 'Claro',
     'profile.dark': 'Oscuro',
     'profile.system': 'Sistema',
-    'profile.logout': 'Cerrar sesión',
+    'profile.logout': 'Cerrar sesi\u00F3n',
 
     // Translator
-    'translator.inputPlaceholder': 'Escribe o pega texto aquí...',
-    'translator.outputPlaceholder': 'La traducción aparecerá aquí...',
+    'translator.inputPlaceholder': 'Escribe o pega texto aqu\u00ED...',
+    'translator.outputPlaceholder': 'La traducci\u00F3n aparecer\u00E1 aqu\u00ED...',
     'translator.translating': 'Traduciendo...',
-    'translator.addToDictionary': 'Añadir al diccionario',
+    'translator.addToDictionary': 'A\u00F1adir al diccionario',
     'translator.characters': 'caracteres',
     'translator.editText': 'Editar texto',
     'translator.langDetected': 'Idioma detectado',
-    'translator.analyzing': 'Analizando gramática...',
+    'translator.analyzing': 'Analizando gram\u00E1tica...',
+    'translator.used': 'Usado',
+    'translator.limitReached': 'L\u00EDmite de caracteres alcanzado. \u00A1Pasa a Pro!',
 
     // Parts of speech
     'pos.noun': 'sustantivo',
@@ -330,67 +429,66 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.adverb': 'adverbio',
     'pos.pronoun': 'pronombre',
     'pos.numeral': 'numeral',
-    'pos.preposition': 'preposición',
-    'pos.conjunction': 'conjunción',
-    'pos.particle': 'partícula',
-    'pos.interjection': 'interjección',
+    'pos.preposition': 'preposici\u00F3n',
+    'pos.conjunction': 'conjunci\u00F3n',
+    'pos.particle': 'part\u00EDcula',
+    'pos.interjection': 'interjecci\u00F3n',
     'pos.participle': 'participio',
     'pos.gerund': 'gerundio',
 
     // Tooltip
-    'tooltip.pos': 'parte de la oración',
-    'tooltip.definition': 'definición',
+    'tooltip.pos': 'parte de la oraci\u00F3n',
+    'tooltip.definition': 'definici\u00F3n',
     'tooltip.example': 'ejemplo',
 
     // Dictionary
     'dictionary.title': 'Diccionario',
-    'dictionary.empty': 'Tu diccionario está vacío',
+    'dictionary.empty': 'Tu diccionario est\u00E1 vac\u00EDo',
     'dictionary.search': 'Buscar palabras...',
-    'dictionary.added': 'añadido al diccionario',
+    'dictionary.added': 'a\u00F1adido al diccionario',
     'dictionary.deleted': 'Palabra eliminada',
-    'dictionary.failedAdd': 'Error al añadir la palabra',
+    'dictionary.failedAdd': 'Error al a\u00F1adir la palabra',
 
     // Settings
-    'settings.title': 'Configuración',
+    'settings.title': 'Configuraci\u00F3n',
     'settings.profile': 'Perfil',
     'settings.fullName': 'Nombre completo',
     'settings.saveChanges': 'Guardar cambios',
     'settings.saving': 'Guardando...',
     'settings.profileUpdated': 'Perfil actualizado',
     'settings.updateFailed': 'Error al actualizar el perfil',
-    'settings.subscription': 'Suscripción',
+    'settings.subscription': 'Suscripci\u00F3n',
     'settings.freePlan': 'Plan gratuito',
     'settings.proPlan': 'Plan Pro',
     'settings.upgradeToPro': 'Actualizar a Pro',
 
     // Language names
     'lang.uk': 'Ucraniano',
-    'lang.en': 'Inglés',
+    'lang.en': 'Ingl\u00E9s',
     'lang.ru': 'Ruso',
-    'lang.es': 'Español',
     'lang.it': 'Italiano',
-    'lang.fr': 'Francés',
-    'lang.de': 'Alemán',
+    'lang.es': 'Espa\u00F1ol',
+    'lang.fr': 'Franc\u00E9s',
   },
 
   fr: {
     // Auth
     'auth.signIn': 'Se connecter',
-    'auth.signUp': 'Créer un compte',
+    'auth.signUp': 'Cr\u00E9er un compte',
     'auth.continueWithGoogle': 'Continuer avec Google',
     'auth.or': 'OU',
     'auth.email': 'E-mail',
     'auth.password': 'Mot de passe',
     'auth.emailPlaceholder': 'vous@exemple.com',
     'auth.passwordPlaceholder': 'Votre mot de passe',
-    'auth.minChars': 'Min. 6 caractères',
+    'auth.minChars': 'Min. 6 caract\u00E8res',
     'auth.signingIn': 'Connexion en cours...',
-    'auth.creatingAccount': 'Création du compte...',
+    'auth.creatingAccount': 'Cr\u00E9ation du compte...',
     'auth.noAccount': "Vous n'avez pas de compte ?",
-    'auth.hasAccount': 'Vous avez déjà un compte ?',
-    'auth.checkEmail': 'Vérifiez votre e-mail pour confirmer votre compte',
-    'auth.signInFailed': 'Échec de la connexion. Veuillez réessayer.',
-    'auth.signUpFailed': 'Échec de la création du compte. Veuillez réessayer.',
+    'auth.hasAccount': 'Vous avez d\u00E9j\u00E0 un compte ?',
+    'auth.checkEmail': 'V\u00E9rifiez votre e-mail pour confirmer votre compte',
+    'auth.signInFailed': '\u00C9chec de la connexion. Veuillez r\u00E9essayer.',
+    'auth.signUpFailed': '\u00C9chec de la cr\u00E9ation du compte. Veuillez r\u00E9essayer.',
 
     // Nav
     'nav.translator': 'Traducteur',
@@ -398,23 +496,25 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // Profile
     'profile.user': 'Utilisateur',
-    'profile.settings': 'Paramètres',
+    'profile.settings': 'Param\u00E8tres',
     'profile.language': 'Langue',
-    'profile.theme': 'Thème',
+    'profile.theme': 'Th\u00E8me',
     'profile.light': 'Clair',
     'profile.dark': 'Sombre',
-    'profile.system': 'Système',
-    'profile.logout': 'Se déconnecter',
+    'profile.system': 'Syst\u00E8me',
+    'profile.logout': 'Se d\u00E9connecter',
 
     // Translator
     'translator.inputPlaceholder': 'Saisissez ou collez du texte ici...',
-    'translator.outputPlaceholder': 'La traduction apparaîtra ici...',
+    'translator.outputPlaceholder': 'La traduction appara\u00EEtra ici...',
     'translator.translating': 'Traduction en cours...',
     'translator.addToDictionary': 'Ajouter au dictionnaire',
-    'translator.characters': 'caractères',
+    'translator.characters': 'caract\u00E8res',
     'translator.editText': 'Modifier le texte',
-    'translator.langDetected': 'Langue détectée',
+    'translator.langDetected': 'Langue d\u00E9tect\u00E9e',
     'translator.analyzing': 'Analyse grammaticale...',
+    'translator.used': 'Utilis\u00E9s',
+    'translator.limitReached': 'Limite de caract\u00E8res atteinte. Passez \u00E0 Pro !',
 
     // Parts of speech
     'pos.noun': 'nom',
@@ -422,35 +522,35 @@ const translations: Record<Locale, Record<string, string>> = {
     'pos.verb': 'verbe',
     'pos.adverb': 'adverbe',
     'pos.pronoun': 'pronom',
-    'pos.numeral': 'numéral',
-    'pos.preposition': 'préposition',
+    'pos.numeral': 'num\u00E9ral',
+    'pos.preposition': 'pr\u00E9position',
     'pos.conjunction': 'conjonction',
     'pos.particle': 'particule',
     'pos.interjection': 'interjection',
     'pos.participle': 'participe',
-    'pos.gerund': 'gérondif',
+    'pos.gerund': 'g\u00E9rondif',
 
     // Tooltip
     'tooltip.pos': 'partie du discours',
-    'tooltip.definition': 'définition',
+    'tooltip.definition': 'd\u00E9finition',
     'tooltip.example': 'exemple',
 
     // Dictionary
     'dictionary.title': 'Dictionnaire',
     'dictionary.empty': 'Votre dictionnaire est vide',
     'dictionary.search': 'Rechercher des mots...',
-    'dictionary.added': 'ajouté au dictionnaire',
-    'dictionary.deleted': 'Mot supprimé',
-    'dictionary.failedAdd': "Échec de l'ajout du mot",
+    'dictionary.added': 'ajout\u00E9 au dictionnaire',
+    'dictionary.deleted': 'Mot supprim\u00E9',
+    'dictionary.failedAdd': "\u00C9chec de l'ajout du mot",
 
     // Settings
-    'settings.title': 'Paramètres',
+    'settings.title': 'Param\u00E8tres',
     'settings.profile': 'Profil',
     'settings.fullName': 'Nom complet',
     'settings.saveChanges': 'Enregistrer les modifications',
     'settings.saving': 'Enregistrement...',
-    'settings.profileUpdated': 'Profil mis à jour',
-    'settings.updateFailed': 'Échec de la mise à jour du profil',
+    'settings.profileUpdated': 'Profil mis \u00E0 jour',
+    'settings.updateFailed': '\u00C9chec de la mise \u00E0 jour du profil',
     'settings.subscription': 'Abonnement',
     'settings.freePlan': 'Plan gratuit',
     'settings.proPlan': 'Plan Pro',
@@ -460,103 +560,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'lang.uk': 'Ukrainien',
     'lang.en': 'Anglais',
     'lang.ru': 'Russe',
-    'lang.es': 'Espagnol',
     'lang.it': 'Italien',
-    'lang.fr': 'Français',
-    'lang.de': 'Allemand',
-  },
-
-  de: {
-    // Auth
-    'auth.signIn': 'Anmelden',
-    'auth.signUp': 'Konto erstellen',
-    'auth.continueWithGoogle': 'Weiter mit Google',
-    'auth.or': 'ODER',
-    'auth.email': 'E-Mail',
-    'auth.password': 'Passwort',
-    'auth.emailPlaceholder': 'du@beispiel.com',
-    'auth.passwordPlaceholder': 'Dein Passwort',
-    'auth.minChars': 'Mind. 6 Zeichen',
-    'auth.signingIn': 'Anmeldung läuft...',
-    'auth.creatingAccount': 'Konto wird erstellt...',
-    'auth.noAccount': 'Noch kein Konto?',
-    'auth.hasAccount': 'Bereits ein Konto?',
-    'auth.checkEmail': 'Überprüfe deine E-Mail, um dein Konto zu bestätigen',
-    'auth.signInFailed': 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.',
-    'auth.signUpFailed': 'Kontoerstellung fehlgeschlagen. Bitte versuche es erneut.',
-
-    // Nav
-    'nav.translator': 'Übersetzer',
-    'nav.dictionary': 'Wörterbuch',
-
-    // Profile
-    'profile.user': 'Benutzer',
-    'profile.settings': 'Einstellungen',
-    'profile.language': 'Sprache',
-    'profile.theme': 'Design',
-    'profile.light': 'Hell',
-    'profile.dark': 'Dunkel',
-    'profile.system': 'System',
-    'profile.logout': 'Abmelden',
-
-    // Translator
-    'translator.inputPlaceholder': 'Text hier eingeben oder einfügen...',
-    'translator.outputPlaceholder': 'Übersetzung erscheint hier...',
-    'translator.translating': 'Übersetze...',
-    'translator.addToDictionary': 'Zum Wörterbuch hinzufügen',
-    'translator.characters': 'Zeichen',
-    'translator.editText': 'Text bearbeiten',
-    'translator.langDetected': 'Sprache erkannt',
-    'translator.analyzing': 'Grammatik wird analysiert...',
-
-    // Parts of speech
-    'pos.noun': 'Substantiv',
-    'pos.adjective': 'Adjektiv',
-    'pos.verb': 'Verb',
-    'pos.adverb': 'Adverb',
-    'pos.pronoun': 'Pronomen',
-    'pos.numeral': 'Numerale',
-    'pos.preposition': 'Präposition',
-    'pos.conjunction': 'Konjunktion',
-    'pos.particle': 'Partikel',
-    'pos.interjection': 'Interjektion',
-    'pos.participle': 'Partizip',
-    'pos.gerund': 'Gerundium',
-
-    // Tooltip
-    'tooltip.pos': 'Wortart',
-    'tooltip.definition': 'Definition',
-    'tooltip.example': 'Beispiel',
-
-    // Dictionary
-    'dictionary.title': 'Wörterbuch',
-    'dictionary.empty': 'Dein Wörterbuch ist leer',
-    'dictionary.search': 'Wörter suchen...',
-    'dictionary.added': 'zum Wörterbuch hinzugefügt',
-    'dictionary.deleted': 'Wort gelöscht',
-    'dictionary.failedAdd': 'Wort konnte nicht hinzugefügt werden',
-
-    // Settings
-    'settings.title': 'Einstellungen',
-    'settings.profile': 'Profil',
-    'settings.fullName': 'Vollständiger Name',
-    'settings.saveChanges': 'Änderungen speichern',
-    'settings.saving': 'Speichern...',
-    'settings.profileUpdated': 'Profil aktualisiert',
-    'settings.updateFailed': 'Profil konnte nicht aktualisiert werden',
-    'settings.subscription': 'Abonnement',
-    'settings.freePlan': 'Kostenloser Plan',
-    'settings.proPlan': 'Pro-Plan',
-    'settings.upgradeToPro': 'Auf Pro upgraden',
-
-    // Language names
-    'lang.uk': 'Ukrainisch',
-    'lang.en': 'Englisch',
-    'lang.ru': 'Russisch',
-    'lang.es': 'Spanisch',
-    'lang.it': 'Italienisch',
-    'lang.fr': 'Französisch',
-    'lang.de': 'Deutsch',
+    'lang.es': 'Espagnol',
+    'lang.fr': 'Fran\u00E7ais',
   },
 }
 

@@ -17,19 +17,18 @@ export const LANGUAGES = [
   { code: 'uk', name: 'Ukrainian' },
   { code: 'en', name: 'English' },
   { code: 'ru', name: 'Russian' },
-  { code: 'es', name: 'Spanish' },
   { code: 'it', name: 'Italian' },
+  { code: 'es', name: 'Spanish' },
   { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
 ] as const
 
 export const UI_LANGUAGES = [
-  { code: 'uk', name: '\u0423\u043A\u0440\u0430\u0457\u043D\u0441\u044C\u043A\u0430' },
+  { code: 'uk', name: 'Українська' },
   { code: 'en', name: 'English' },
-  { code: 'ru', name: '\u0420\u0443\u0441\u0441\u043A\u0438\u0439' },
-  { code: 'es', name: 'Espa\u00F1ol' },
-  { code: 'fr', name: 'Fran\u00E7ais' },
-  { code: 'de', name: 'Deutsch' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'it', name: 'Italiano' },
+  { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
 ] as const
 
 export const CHARACTER_LIMITS = {
