@@ -22,6 +22,34 @@ const MODELS = [
   'arcee-ai/trinity-large-preview:free',
 ].filter(Boolean) as string[]
 
+// In-memory cache for analysis results (survives across requests in same serverless instance)
+const analysisCache = new Map<string, { words: Record<string, unknown>[]; ts: number }>()
+const CACHE_TTL = 1000 * 60 * 30 // 30 minutes
+const MAX_CACHE_SIZE = 200
+
+function getCacheKey(translatedText: string, targetLang: string, uiLang: string): string {
+  return `${targetLang}:${uiLang}:${translatedText.trim().toLowerCase()}`
+}
+
+function getFromCache(key: string): Record<string, unknown>[] | null {
+  const entry = analysisCache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.ts > CACHE_TTL) {
+    analysisCache.delete(key)
+    return null
+  }
+  return entry.words
+}
+
+function setCache(key: string, words: Record<string, unknown>[]) {
+  // Evict oldest entries if cache is full
+  if (analysisCache.size >= MAX_CACHE_SIZE) {
+    const oldest = analysisCache.keys().next().value
+    if (oldest) analysisCache.delete(oldest)
+  }
+  analysisCache.set(key, { words, ts: Date.now() })
+}
+
 function extractJSON(raw: string): string {
   // Remove think tags (DeepSeek R1 models)
   let cleaned = raw
@@ -62,7 +90,7 @@ async function tryAnalyze(
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
-    temperature: 0,
+    temperature: 0.3,
     max_tokens: 4000,
   }, { signal })
 
@@ -97,25 +125,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check cache first — instant response for repeated queries
+    const cacheKey = getCacheKey(translatedText, targetLang, uiLang)
+    const cached = getFromCache(cacheKey)
+    if (cached) {
+      console.log('[Analyze] Cache hit for:', translatedText.slice(0, 40))
+      const words = cached.map((w, i) => normalizeWord(w, i))
+      return NextResponse.json({ words })
+    }
+
     const uiLangName = UI_LANG_NAMES[uiLang] || 'English'
     const targetLangName = UI_LANG_NAMES[targetLang] || targetLang
+    const sourceLangName = UI_LANG_NAMES[sourceLang] || sourceLang
 
-    const systemPrompt = `You are a linguistic analyzer. Return ONLY valid JSON, no other text.
+    const systemPrompt = `You are a professional linguistic analyzer. Return ONLY valid JSON, no other text.
 
-Analyze each word in the translated text. Return JSON:
+Analyze the translated text word by word. For each word return:
 {"words":[{"id":"w1","original":"source word","translation":"translated word","pos":"verb","grammar":"info","definition":"meaning","example":"sentence"}]}
 
-Rules:
-- pos must be ONE of: noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund
-- grammar: grammatical info (tense, person, number, gender, case) in ${uiLangName}
-- definition: brief meaning in ${uiLangName}
-- example: example sentence using this word in ${targetLangName}
-- id: sequential "w1","w2","w3"...`
+STRICT RULES for pos (part of speech) — pick exactly ONE:
+- "noun" — table, cat, idea
+- "verb" — run, is, have
+- "adjective" — big, red, beautiful
+- "adverb" — quickly, very, here, now, always
+- "pronoun" — I, he, this, who, nothing, everything
+- "numeral" — one, first, 5
+- "preposition" — in, on, at, with, from, to, for, about
+- "conjunction" — and, but, or, because, that, if, when
+- "particle" — not, don't, doesn't, n't, to (before verb)
+- "interjection" — oh, wow, hey
+- "participle" — running (adj use), broken (adj use)
+- "gerund" — swimming (noun use)
 
-    const userPrompt = `Source (${sourceLang}): "${sourceText}"
-Translation (${targetLang}): "${translatedText}"
+IMPORTANT for each word:
+- "original": the corresponding word from the SOURCE text (${sourceLangName})
+- "translation": the word from the TRANSLATED text (${targetLangName})
+- "grammar": grammatical form details (tense, person, number, gender, case etc.) — write in ${uiLangName}
+- "definition": brief meaning/explanation of this word — write in ${uiLangName}
+- "example": create a NEW, ORIGINAL example sentence using this word in ${targetLangName}. Do NOT copy from the source or translated text. Invent a completely different sentence.
+- "id": sequential "w1","w2","w3"...
 
-Return ONLY JSON.`
+Match words between source and translation by meaning, not by position.`
+
+    const userPrompt = `Source (${sourceLangName}): "${sourceText}"
+Translation (${targetLangName}): "${translatedText}"
+
+Analyze every word in the translation. Return ONLY JSON.`
 
     // Try each model in order
     let rawWords: Record<string, unknown>[] | null = null
@@ -137,23 +192,10 @@ Return ONLY JSON.`
       return NextResponse.json({ words: [] })
     }
 
-    const words = rawWords.map((w, i) => {
-      let pos = String(w.pos || 'noun').toLowerCase().trim()
-      if (!VALID_POS.has(pos)) {
-        const parts = pos.split(/[+\/,\s]+/)
-        pos = parts.find((p: string) => VALID_POS.has(p)) || 'noun'
-      }
-      return {
-        id: w.id || `w${i + 1}`,
-        original: String(w.original || ''),
-        translation: String(w.translation || ''),
-        pos,
-        grammar: String(w.grammar || ''),
-        definition: String(w.definition || ''),
-        example: String(w.example || ''),
-        explanation: String(w.explanation || ''),
-      }
-    })
+    // Cache the raw result
+    setCache(cacheKey, rawWords)
+
+    const words = rawWords.map((w, i) => normalizeWord(w, i))
 
     console.log('[Analyze] Final:', words.map((w: { translation: string; pos: string }) => `${w.translation}(${w.pos})`).join(', '))
 
@@ -161,5 +203,23 @@ Return ONLY JSON.`
   } catch (err) {
     console.error('[Analyze] Unexpected error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ words: [] })
+  }
+}
+
+function normalizeWord(w: Record<string, unknown>, i: number) {
+  let pos = String(w.pos || 'noun').toLowerCase().trim()
+  if (!VALID_POS.has(pos)) {
+    const parts = pos.split(/[+\/,\s]+/)
+    pos = parts.find((p: string) => VALID_POS.has(p)) || 'noun'
+  }
+  return {
+    id: w.id || `w${i + 1}`,
+    original: String(w.original || ''),
+    translation: String(w.translation || ''),
+    pos,
+    grammar: String(w.grammar || ''),
+    definition: String(w.definition || ''),
+    example: String(w.example || ''),
+    explanation: String(w.explanation || ''),
   }
 }

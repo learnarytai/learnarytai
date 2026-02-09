@@ -4,6 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDebounce } from './use-debounce'
 import type { ParsedWord } from '@/lib/types'
 
+// Client-side cache for analysis results — instant on repeat
+const clientAnalysisCache = new Map<string, ParsedWord[]>()
+
 export function useTranslation(
   text: string,
   sourceLang: string,
@@ -116,6 +119,15 @@ export function useTranslation(
       srcLang: string,
       tgtLang: string
     ) => {
+      // Check client-side cache first — instant
+      const cacheKey = `${tgtLang}:${uiLang}:${translated.trim().toLowerCase()}`
+      const cached = clientAnalysisCache.get(cacheKey)
+      if (cached) {
+        console.log('[Analysis] Client cache hit')
+        setParsedWords(cached)
+        return
+      }
+
       const controller = new AbortController()
       analyzeControllerRef.current = controller
 
@@ -144,10 +156,12 @@ export function useTranslation(
           console.log('[Analysis] Got words:', data.words?.length, data.words?.[0])
           if (data.words?.length > 0) {
             setParsedWords(data.words)
+            // Store in client cache
+            clientAnalysisCache.set(cacheKey, data.words)
           }
         } else {
-          const text = await res.text()
-          console.error('[Analysis] Error response:', res.status, text)
+          const errText = await res.text()
+          console.error('[Analysis] Error response:', res.status, errText)
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
