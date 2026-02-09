@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Header } from '@/components/dashboard/header'
 import { LanguageProvider } from '@/components/providers/language-provider'
@@ -13,6 +14,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [locale, setLocale] = useState<Locale>('en')
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
@@ -23,6 +25,26 @@ export default function DashboardLayout({
     }
     return supabaseRef.current
   }
+
+  // Session check: if "remember me" was unchecked and browser was closed, sign out
+  useEffect(() => {
+    const rememberMe = localStorage.getItem('remember-me')
+    const sessionActive = sessionStorage.getItem('session-active')
+
+    if (rememberMe === 'false' && !sessionActive) {
+      // Browser was closed since last login — sign out
+      const supabase = getSupabase()
+      supabase.auth.signOut().then(() => {
+        localStorage.removeItem('remember-me')
+        router.push('/login')
+        router.refresh()
+      })
+      return
+    }
+
+    // Mark session as active for this tab
+    sessionStorage.setItem('session-active', 'true')
+  }, [router])
 
   const loadProfile = useCallback(async () => {
     const supabase = getSupabase()

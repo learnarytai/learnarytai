@@ -11,6 +11,7 @@ interface TextEditorProps {
   parsedWords?: ParsedWord[]
   hoveredWordId: string | null
   isLoading?: boolean
+  isAnalyzing?: boolean
   placeholder?: string
   onChange?: (text: string) => void
   onWordHover: (wordId: string | null, event?: React.MouseEvent) => void
@@ -23,6 +24,7 @@ export function TextEditor({
   parsedWords = [],
   hoveredWordId,
   isLoading,
+  isAnalyzing,
   placeholder,
   onChange,
   onWordHover,
@@ -31,7 +33,6 @@ export function TextEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { t } = useLanguage()
 
-  // Focus textarea when switching to input mode
   useEffect(() => {
     if (mode === 'input' && textareaRef.current) {
       const el = textareaRef.current
@@ -59,6 +60,49 @@ export function TextEditor({
     )
   }
 
+  // Render word spans (used by both source and output modes)
+  const renderWords = (getWordText: (w: ParsedWord) => string, keyPrefix: string) => {
+    if (parsedWords.length === 0) {
+      // No analysis yet — show plain text as non-interactive spans
+      return <span>{text}</span>
+    }
+
+    return parsedWords.map((word, i) => {
+      const isHovered = hoveredWordId === word.id
+      const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech]
+
+      return (
+        <span key={`${keyPrefix}-${word.id}`}>
+          <span
+            data-word-id={word.id}
+            className="cursor-pointer rounded px-[1px] transition-colors duration-100"
+            style={{
+              backgroundColor: isHovered
+                ? color
+                  ? `${color}50`
+                  : 'rgba(255, 255, 0, 0.3)'
+                : undefined,
+              borderBottom: isHovered
+                ? `2px solid ${color || '#FFCC00'}`
+                : '2px solid transparent',
+            }}
+            onMouseEnter={(e) => {
+              e.stopPropagation()
+              onWordHover(word.id, e)
+            }}
+            onMouseLeave={(e) => {
+              e.stopPropagation()
+              onWordHover(null)
+            }}
+          >
+            {getWordText(word)}
+          </span>
+          {i < parsedWords.length - 1 ? ' ' : ''}
+        </span>
+      )
+    })
+  }
+
   // Source mode - highlighted source words, click to edit
   if (mode === 'source') {
     return (
@@ -71,93 +115,34 @@ export function TextEditor({
           className="min-h-[200px]"
           style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
         >
-          {parsedWords.length > 0 ? (
-            parsedWords.map((word, i) => {
-              const isHovered = hoveredWordId === word.id
-              const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech]
-
-              return (
-                <span key={`src-${word.id}`}>
-                  <span
-                    data-word-id={word.id}
-                    className="cursor-pointer rounded-sm px-[1px] transition-all duration-150"
-                    style={{
-                      backgroundColor: isHovered && color
-                        ? `${color}40`
-                        : undefined,
-                      boxShadow: isHovered ? `0 2px 0 ${color || '#FFFF00'}` : undefined,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.stopPropagation()
-                      onWordHover(word.id, e)
-                    }}
-                    onMouseLeave={(e) => {
-                      e.stopPropagation()
-                      onWordHover(null)
-                    }}
-                  >
-                    {word.original}
-                  </span>
-                  {i < parsedWords.length - 1 ? ' ' : ''}
-                </span>
-              )
-            })
-          ) : (
-            <span>{text}</span>
-          )}
+          {renderWords((w) => w.original, 'src')}
         </div>
       </div>
     )
   }
 
-  // Output mode - highlighted translated words
-  const renderHighlightedText = () => {
-    if (isLoading) {
-      return (
+  // Output mode
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
         <div className="flex items-center gap-2 text-muted-foreground">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           <span className="text-sm">{t('translator.translating')}</span>
         </div>
-      )
-    }
+      </div>
+    )
+  }
 
-    if (!text) {
-      return (
-        <span className="text-muted-foreground/40">
-          {t('translator.outputPlaceholder')}
-        </span>
-      )
-    }
-
-    if (parsedWords.length === 0) {
-      return <span>{text}</span>
-    }
-
-    return parsedWords.map((word, i) => {
-      const isHovered = hoveredWordId === word.id
-      const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech]
-
-      return (
-        <span key={`tgt-${word.id}`}>
-          <span
-            data-word-id={word.id}
-            data-pos={word.pos}
-            className="cursor-pointer rounded-sm px-[1px] transition-all duration-150"
-            style={{
-              backgroundColor: isHovered && color
-                ? `${color}40`
-                : undefined,
-              boxShadow: isHovered ? `0 2px 0 ${color || '#FFFF00'}` : undefined,
-            }}
-            onMouseEnter={(e) => onWordHover(word.id, e)}
-            onMouseLeave={() => onWordHover(null)}
-          >
-            {word.translation}
+  if (!text) {
+    return (
+      <div className="h-full">
+        <div className="min-h-[200px]">
+          <span className="text-muted-foreground/40">
+            {t('translator.outputPlaceholder')}
           </span>
-          {i < parsedWords.length - 1 ? ' ' : ''}
-        </span>
-      )
-    })
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -166,8 +151,14 @@ export function TextEditor({
         className="min-h-[200px]"
         style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
       >
-        {renderHighlightedText()}
+        {renderWords((w) => w.translation, 'tgt')}
       </div>
+      {isAnalyzing && (
+        <div className="mt-4 flex items-center justify-center gap-2 text-muted-foreground">
+          <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary/40 border-t-primary" />
+          <span className="text-sm">{t('translator.analyzing')}</span>
+        </div>
+      )}
     </div>
   )
 }

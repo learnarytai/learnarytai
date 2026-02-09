@@ -9,13 +9,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-
 import { toast } from 'sonner'
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -27,6 +27,9 @@ export default function LoginPage() {
       if (error) {
         toast.error(error.message)
       } else {
+        // Store remember-me preference
+        localStorage.setItem('remember-me', rememberMe ? 'true' : 'false')
+        sessionStorage.setItem('session-active', 'true')
         router.push('/translator')
         router.refresh()
       }
@@ -37,6 +40,9 @@ export default function LoginPage() {
   }
 
   const handleGoogle = async () => {
+    // Google OAuth always remembers (persistent session)
+    localStorage.setItem('remember-me', 'true')
+    sessionStorage.setItem('session-active', 'true')
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -88,6 +94,18 @@ export default function LoginPage() {
                 placeholder="Your password"
                 required
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 accent-primary"
+              />
+              <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer select-none">
+                Remember me
+              </label>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}

@@ -259,14 +259,9 @@ export function TranslationArea() {
               parsedWords={parsedWords}
               hoveredWordId={hoveredWordId}
               isLoading={isLoading}
+              isAnalyzing={isAnalyzing}
               onWordHover={handleWordHover}
             />
-            {isAnalyzing && (
-              <div className="pointer-events-none absolute bottom-2 right-3 flex items-center gap-1 text-xs text-muted-foreground/50">
-                <div className="h-3 w-3 animate-spin rounded-full border border-primary/30 border-t-primary/70" />
-                {t('translator.analyzing')}
-              </div>
-            )}
           </div>
         </div>
       </div>
