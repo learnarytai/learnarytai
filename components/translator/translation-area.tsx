@@ -152,7 +152,6 @@ export function TranslationArea() {
   const tooltipWord = tooltipAnchor
     ? parsedWords.find((w) => w.id === tooltipAnchor.wordId) || null
     : null
-  const hasAnalysisData = tooltipWord ? !!(tooltipWord.definition || tooltipWord.grammar) : false
 
   const handleWordHover = useCallback(
     (wordId: string | null, event?: React.MouseEvent) => {
@@ -302,10 +301,11 @@ export function TranslationArea() {
         </div>
       </div>
 
-      {tooltipWord && tooltipAnchor && hasAnalysisData && (
+      {tooltipWord && tooltipAnchor && (
         <WordTooltip
           word={tooltipWord}
           position={tooltipAnchor.position}
+          isAnalyzing={isAnalyzing}
           onAddToDictionary={handleAddToDictionary}
           onMouseEnter={handleTooltipMouseEnter}
           onMouseLeave={handleTooltipMouseLeave}

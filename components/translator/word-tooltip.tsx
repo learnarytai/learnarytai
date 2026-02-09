@@ -10,15 +10,17 @@ import { Plus } from 'lucide-react'
 interface WordTooltipProps {
   word: ParsedWord
   position: { x: number; y: number }
+  isAnalyzing?: boolean
   onAddToDictionary: (word: ParsedWord) => void
   onMouseEnter?: () => void
   onMouseLeave?: () => void
 }
 
-export function WordTooltip({ word, position, onAddToDictionary, onMouseEnter, onMouseLeave }: WordTooltipProps) {
+export function WordTooltip({ word, position, isAnalyzing, onAddToDictionary, onMouseEnter, onMouseLeave }: WordTooltipProps) {
   const color = PART_OF_SPEECH_COLORS[word.pos as PartOfSpeech] || '#e5e5e5'
   const tooltipRef = useRef<HTMLDivElement>(null)
   const { t } = useLanguage()
+  const hasData = !!(word.definition || word.grammar)
 
   useEffect(() => {
     if (!tooltipRef.current) return
@@ -71,20 +73,30 @@ export function WordTooltip({ word, position, onAddToDictionary, onMouseEnter, o
             <p className="text-sm italic text-foreground/80">{word.example}</p>
           </div>
         )}
+
+        {/* Loading state when analysis hasn't completed yet */}
+        {!hasData && isAnalyzing && (
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <span>{t('translator.analyzing')}</span>
+          </div>
+        )}
       </div>
 
-      {/* Add to Dictionary */}
-      <div className="border-t px-4 py-2.5" style={{ borderColor: `${color}30` }}>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full text-xs"
-          onClick={() => onAddToDictionary(word)}
-        >
-          <Plus className="mr-1 h-3 w-3" />
-          {t('translator.addToDictionary')}
-        </Button>
-      </div>
+      {/* Add to Dictionary - only when we have real data */}
+      {hasData && (
+        <div className="border-t px-4 py-2.5" style={{ borderColor: `${color}30` }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => onAddToDictionary(word)}
+          >
+            <Plus className="mr-1 h-3 w-3" />
+            {t('translator.addToDictionary')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

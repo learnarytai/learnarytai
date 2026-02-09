@@ -12,6 +12,39 @@ const UI_LANG_NAMES: Record<string, string> = {
   it: 'Italian', es: 'Spanish', fr: 'French',
 }
 
+function extractJSON(raw: string): string {
+  // Remove think tags (DeepSeek R1)
+  let cleaned = raw
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/gi, '')
+    .trim()
+
+  // Find outermost { ... }
+  let depth = 0
+  let start = -1
+  for (let i = 0; i < cleaned.length; i++) {
+    if (cleaned[i] === '{') {
+      if (depth === 0) start = i
+      depth++
+    } else if (cleaned[i] === '}') {
+      depth--
+      if (depth === 0 && start !== -1) {
+        return cleaned.slice(start, i + 1)
+      }
+    }
+  }
+
+  // Fallback: simple slice
+  const jsonStart = cleaned.indexOf('{')
+  const jsonEnd = cleaned.lastIndexOf('}')
+  if (jsonStart !== -1 && jsonEnd > jsonStart) {
+    return cleaned.slice(jsonStart, jsonEnd + 1)
+  }
+
+  throw new Error('No JSON object found in response')
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { sourceText, translatedText, sourceLang, targetLang, uiLang } = await request.json()
@@ -27,23 +60,26 @@ export async function POST(request: NextRequest) {
     }
 
     const uiLangName = UI_LANG_NAMES[uiLang] || 'English'
-
     const targetLangName = UI_LANG_NAMES[targetLang] || targetLang
-    const systemPrompt = `Analyze each word in the translated text. For contractions (e.g. I'm, don't, it's), split into separate words.
 
-For each word return:
-- id: "w1","w2"...
-- original: source word(s)
-- translation: translated word
-- pos: ONE of: noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund
-- grammar: grammatical info (gender, number, case, tense, person) in ${uiLangName}
-- definition: short definition of this word in ${uiLangName}
+    const systemPrompt = `You are a linguistic analyzer. Analyze each word in the translated text.
+
+For each word return a JSON object with:
+- id: "w1","w2","w3"... sequential
+- original: the corresponding source word
+- translation: the translated word
+- pos: exactly ONE of: noun, adjective, verb, adverb, pronoun, numeral, preposition, conjunction, particle, interjection, participle, gerund
+- grammar: grammatical info (gender, number, tense, person, case) in ${uiLangName}
+- definition: brief definition in ${uiLangName}
 - example: one example sentence using this word in ${targetLangName}
 
-Return ONLY JSON: {"words":[...]}`
+IMPORTANT: Return ONLY valid JSON in this exact format, no other text:
+{"words":[{"id":"w1","original":"...","translation":"...","pos":"...","grammar":"...","definition":"...","example":"..."}]}`
 
     const userPrompt = `Source (${sourceLang}): "${sourceText}"
 Translation (${targetLang}): "${translatedText}"`
+
+    console.log('[Analyze] Requesting analysis for:', sourceText.substring(0, 50))
 
     const completion = await openrouter.chat.completions.create({
       model: process.env.OPENROUTER_MODEL || 'tngtech/deepseek-r1t2-chimera:free',
@@ -52,25 +88,21 @@ Translation (${targetLang}): "${translatedText}"`
         { role: 'user', content: userPrompt },
       ],
       temperature: 0,
-      max_tokens: 2000,
+      max_tokens: 3000,
     })
 
     const content = completion.choices[0]?.message?.content || ''
+    console.log('[Analyze] Raw response length:', content.length)
 
-    let cleaned = content
-      .replace(/```json\n?/g, '')
-      .replace(/```\n?/g, '')
-      .replace(/<think>[\s\S]*?<\/think>/g, '')
-      .trim()
-
-    const jsonStart = cleaned.indexOf('{')
-    const jsonEnd = cleaned.lastIndexOf('}')
-    if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('No JSON found in AI response')
+    if (!content) {
+      console.error('[Analyze] Empty response from model')
+      return NextResponse.json({ words: [] })
     }
-    cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
 
-    const parsed = JSON.parse(cleaned)
+    const jsonStr = extractJSON(content)
+    console.log('[Analyze] Extracted JSON length:', jsonStr.length)
+
+    const parsed = JSON.parse(jsonStr)
     const words = (parsed.words || []).map((w: Record<string, unknown>, i: number) => {
       let pos = String(w.pos || 'noun').toLowerCase().trim()
       // Normalize compound POS like "pronoun+verb" to first valid one
@@ -80,19 +112,21 @@ Translation (${targetLang}): "${translatedText}"`
       }
       return {
         id: w.id || `w${i + 1}`,
-        original: w.original || '',
-        translation: w.translation || '',
+        original: String(w.original || ''),
+        translation: String(w.translation || ''),
         pos,
-        grammar: w.grammar || '',
-        definition: w.definition || '',
-        example: w.example || '',
-        explanation: w.explanation || '',
+        grammar: String(w.grammar || ''),
+        definition: String(w.definition || ''),
+        example: String(w.example || ''),
+        explanation: String(w.explanation || ''),
       }
     })
 
+    console.log('[Analyze] Parsed', words.length, 'words. POS:', words.map((w: { pos: string }) => w.pos).join(', '))
+
     return NextResponse.json({ words })
   } catch (err) {
-    console.error('[Analyze] Error:', err)
+    console.error('[Analyze] Error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ words: [] })
   }
 }
