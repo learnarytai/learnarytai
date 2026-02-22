@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { openrouter } from '@/lib/openrouter'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -48,6 +49,101 @@ function setCache(key: string, words: Record<string, unknown>[]) {
     if (oldest) analysisCache.delete(oldest)
   }
   analysisCache.set(key, { words, ts: Date.now() })
+}
+
+// --- Supabase DB cache (layer 3: persistent, shared across users) ---
+
+function splitIntoWords(text: string): { raw: string; lower: string }[] {
+  return text
+    .split(/\s+/)
+    .map(w => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''))
+    .filter(w => w.length > 0)
+    .map(w => ({ raw: w, lower: w.toLowerCase() }))
+}
+
+interface CachedWord {
+  word_lower: string
+  pos: string
+  grammar: string
+  definition: string
+  example: string
+}
+
+async function lookupCachedWords(
+  wordLowers: string[],
+  targetLang: string,
+  uiLang: string
+): Promise<Map<string, CachedWord> | null> {
+  try {
+    const admin = getAdminClient()
+    const { data, error } = await admin
+      .from('word_analysis_cache')
+      .select('word_lower, pos, grammar, definition, example')
+      .in('word_lower', wordLowers)
+      .eq('target_lang', targetLang)
+      .eq('ui_lang', uiLang)
+
+    if (error) {
+      console.error('[Analyze] DB lookup error:', error.message)
+      return null
+    }
+
+    const map = new Map<string, CachedWord>()
+    for (const row of data ?? []) {
+      map.set(row.word_lower, row)
+    }
+    return map
+  } catch (err) {
+    console.error('[Analyze] DB lookup failed:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
+function storeCachedWords(
+  words: Record<string, unknown>[],
+  targetLang: string,
+  uiLang: string
+) {
+  try {
+    const admin = getAdminClient()
+    const payload = words.map(w => ({
+      word_lower: String(w.translation || '').toLowerCase(),
+      target_lang: targetLang,
+      ui_lang: uiLang,
+      pos: String(w.pos || 'noun').toLowerCase(),
+      grammar: String(w.grammar || ''),
+      definition: String(w.definition || ''),
+      example: String(w.example || ''),
+    })).filter(w => w.word_lower.length > 0)
+
+    if (payload.length === 0) return
+
+    admin.rpc('upsert_word_analyses', { p_words: payload }).then(
+      ({ error }: { error: unknown }) => {
+        if (error) console.error('[Analyze] DB store error:', error)
+        else console.log('[Analyze] Stored', payload.length, 'words to DB cache')
+      }
+    )
+  } catch (err) {
+    console.error('[Analyze] DB store failed:', err instanceof Error ? err.message : err)
+  }
+}
+
+function bumpUsageCount(wordLowers: string[], targetLang: string, uiLang: string) {
+  try {
+    const admin = getAdminClient()
+    admin.rpc('bump_word_usage', {
+      p_word_lowers: wordLowers,
+      p_target_lang: targetLang,
+      p_ui_lang: uiLang,
+    }).then(
+      ({ error }: { error: unknown }) => {
+        if (error) console.error('[Analyze] DB bump error:', error)
+      }
+    )
+  } catch (err) {
+    console.error('[Analyze] DB bump failed:', err instanceof Error ? err.message : err)
+  }
 }
 
 function extractJSON(raw: string): string {
@@ -125,13 +221,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check cache first — instant response for repeated queries
+    // Check memory cache first — instant response for repeated queries
     const cacheKey = getCacheKey(translatedText, targetLang, uiLang)
     const cached = getFromCache(cacheKey)
     if (cached) {
-      console.log('[Analyze] Cache hit for:', translatedText.slice(0, 40))
+      console.log('[Analyze] Memory cache hit for:', translatedText.slice(0, 40))
       const words = cached.map((w, i) => normalizeWord(w, i))
       return NextResponse.json({ words })
+    }
+
+    // Check DB cache (Supabase) — shared across all users & instances
+    const textWords = splitIntoWords(translatedText)
+    const wordLowers = [...new Set(textWords.map(w => w.lower))]
+
+    if (wordLowers.length > 0) {
+      const dbCache = await lookupCachedWords(wordLowers, targetLang, uiLang)
+      if (dbCache && wordLowers.every(w => dbCache.has(w))) {
+        console.log('[Analyze] DB cache hit for:', translatedText.slice(0, 40))
+
+        // Build word list from DB data, preserving original text order
+        const sourceWords = splitIntoWords(sourceText)
+        const dbWords = textWords.map((tw, i) => {
+          const entry = dbCache.get(tw.lower)!
+          return {
+            id: `w${i + 1}`,
+            original: sourceWords[i]?.raw || '',
+            translation: tw.raw,
+            pos: entry.pos,
+            grammar: entry.grammar,
+            definition: entry.definition,
+            example: entry.example,
+          }
+        })
+
+        // Store in memory cache too
+        setCache(cacheKey, dbWords)
+        // Bump usage counts (fire-and-forget)
+        bumpUsageCount(wordLowers, targetLang, uiLang)
+
+        const words = dbWords.map((w, i) => normalizeWord(w, i))
+        return NextResponse.json({ words })
+      }
     }
 
     const uiLangName = UI_LANG_NAMES[uiLang] || 'English'
@@ -192,8 +322,9 @@ Analyze every word in the translation. Return ONLY JSON.`
       return NextResponse.json({ words: [] })
     }
 
-    // Cache the raw result
+    // Cache the raw result (memory + DB)
     setCache(cacheKey, rawWords)
+    storeCachedWords(rawWords, targetLang, uiLang)
 
     const words = rawWords.map((w, i) => normalizeWord(w, i))
 
